@@ -105,10 +105,11 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
 .chat-modal .chat-area{max-height:55vh;overflow-y:auto;padding:4px 0;display:flex;flex-direction:column;gap:6px}
 .chat-modal .chat-area::-webkit-scrollbar{width:3px}
 .chat-modal .chat-area::-webkit-scrollbar-thumb{background:var(--pink);border-radius:10px}
-.chat-bubble{background:#f0e6ff;border-radius:12px 12px 12px 4px;padding:10px 14px;font-size:13px;line-height:1.6;max-width:88%;color:#333;align-self:flex-start;animation:bubbleIn .3s ease}
+.chat-bubble{background:#f0e6ff;border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:13px;line-height:1.6;max-width:88%;color:#333;align-self:flex-start;animation:bubbleIn .3s ease;margin:3px 0}
 .chat-bubble.self{background:var(--pink);color:#fff;border-radius:12px 12px 4px 12px;align-self:flex-end}
-.chat-bubble.self .r-opt{display:block;background:rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;margin-top:4px;cursor:pointer;font-size:12px;transition:background .2s}
-.chat-bubble.self .r-opt:active{background:rgba(255,255,255,0.35)}
+.chat-bubble.na{background:#f0e6ff}
+.chat-bubble .r-opt{display:block;background:rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;margin-top:4px;cursor:pointer;font-size:12px;transition:background .2s}
+.chat-bubble .r-opt:active{background:rgba(255,255,255,0.35)}
 @keyframes bubbleIn{0%{opacity:0;transform:scale(0.95)}100%{opacity:1;transform:scale(1)}}
 
 /* ===== 日程页 ===== */
@@ -126,7 +127,7 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
 .sched-btn.disabled{opacity:0.35;pointer-events:none}
 
 /* ===== 档案页 ===== */
-#radar-canvas{display:block;margin:0 auto;width:100%;max-width:190px;height:auto}
+#radar-canvas{display:block;margin:0 auto;width:100%;max-width:220px;height:auto}
 .profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
 .profile-stat{background:linear-gradient(135deg,#fce4ec,#fff);border-radius:10px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center}
 .profile-stat .s-label{font-size:11px;color:#666}
@@ -296,15 +297,15 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
 
     <!-- 档案页 -->
     <div class="page" id="page-profile">
-      <div class="card" style="text-align:center;padding:10px">
-        <canvas id="radar-canvas" width="200" height="170"></canvas>
+      <div class="card" style="text-align:center;padding:8px">
+        <canvas id="radar-canvas" width="240" height="200"></canvas>
       </div>
       <div class="card">
-        <div class="page-title" style="font-size:14px;margin:0">📊 属性</div>
+        <div class="page-title" style="font-size:14px;margin:0">📊 属性 <span style="font-size:10px;color:#999;font-weight:400">点击属性查看作用</span></div>
         <div class="profile-stats" id="profile-stats"></div>
       </div>
       <div class="card">
-        <div class="page-title" style="font-size:14px;margin:0">💕 关系</div>
+        <div class="page-title" style="font-size:14px;margin:0">💕 关系圈</div>
         <div class="profile-stats" id="profile-relations"></div>
       </div>
       <div class="card">
@@ -423,7 +424,27 @@ const SENDERS={
   fan:['追星小粉丝💕','星星守护者🌟','你的小迷妹🌸','idol后援会','忠实听众🎵','从练习生就关注你'],
   media:['娱乐周刊📰','时尚COSMO','星访谈节目组','娱乐星探','每日文娱'],
   brand:['LUXURY美妆','XX服饰品牌方','潮牌SUPREME','饮品代言合作','珠宝品牌挚友'],
-  fanclub:['粉头小助理','后援会会长','粉丝管理组','应援站站长']
+  fanclub:['粉头小助理','后援会会长','粉丝管理组','应援站站长'],
+  // 负面NPC
+  paparazzi:['狗仔队·阿强','偷拍工作室','八卦周刊','娱记小李'],
+  antifan:['黑粉头子·键盘侠','职业黑粉','恶意营销号'],
+  rival:['对家工作室','竞争对手团队','业内匿名']
+};
+
+// 负面NPC消息池
+const NEGATIVE_MSGS={
+  paparazzi:[
+    {text:'我手上有你和XXX的照片，不想曝光的话……💰',type:'勒索',options:[{text:'💸 花钱摆平',eff:{money:-1000,exposure:-8},rel:{agent:2},msg:'狗仔拿了钱走了……暂时安全了'},{text:'💪 报警处理',eff:{eq:5,exposure:5},rel:{agent:5,fans:5},msg:'虽然被曝光了一些，但粉丝支持你维权！'},{text:'🙈 不理他',eff:{exposure:12,fans:-0.05},rel:{fans:-5,agent:-5},msg:'狗仔把照片发出去了！曝光暴涨！'}]},
+    {text:'明天XX酒店有个大新闻，你要不要来"澄清"一下？🤔',type:'陷阱',options:[{text:'❌ 不去，肯定是陷阱',eff:{eq:3},rel:{agent:3},msg:'明智的选择！'},{text:'😰 去解释清楚',eff:{exposure:15,popularity:-10},rel:{fans:-5},msg:'中计了！他们埋伏了更多狗仔！'}]}
+  ],
+  antifan:[
+    {text:'你那个新舞台也太拉胯了吧？就这水平还当爱豆？🤮',type:'嘲讽',options:[{text:'😤 直接拉黑',eff:{eq:-2},rel:{fans:3},msg:'粉丝觉得你很大气'},{text:'🎤 用作品回应',eff:{talent:5,popularity:8,fans:500},rel:{fans:5},msg:'新舞台狠狠打了黑粉的脸！'},{text:'😭 忍不住对骂',eff:{eq:-5,popularity:-5},rel:{fans:-5,agent:-3},msg:'和黑粉吵架被截图了……'}]},
+    {text:'听说你以前……呵呵，要我给你爆点料吗？😈',type:'威胁',options:[{text:'😇 身正不怕影子斜',eff:{eq:8,popularity:3},rel:{fans:5},msg:'粉丝更加支持你了！'},{text:'😰 私下求他不要',eff:{money:-500,eq:-3,exposure:3},rel:{agent:-3},msg:'他收了钱暂时消停了……'}]}
+  ],
+  rival:[
+    {text:'听说XX节目在找你？不好意思，我们已经定了别人😊',type:'截胡',options:[{text:'😤 找节目组理论',eff:{eq:3,popularity:-3,fans:-200},rel:{brand:-5},msg:'虽然没能争取到，但展现了态度'},{text:'💪 默默提升自己',eff:{talent:8,popularity:5},rel:{agent:5},msg:'你用实力证明了自己！'}],need:{talent:50}},
+    {text:'你那个代言我们也很想要，公平竞争咯～',type:'竞争',options:[{text:'🏆 正面竞争不退缩',eff:{popularity:8,beauty:3,money:500},rel:{brand:5},msg:'你赢了！品牌方选择了你！'},{text:'🤝 让给他算了',eff:{eq:5},rel:{agent:-3,brand:-3},msg:'对方得逞了，你的机会没了……'}]}
+  ]
 };
 
 // 每日氛围/心情（让每一天都不一样）
@@ -1097,6 +1118,26 @@ function generateStateMessages(){
     addMessage('media','📰',pick(SENDERS.media),pick(msgs),'媒体');
   }
 
+  // ===== 负面NPC消息（基于游戏状态）=----
+  // 狗仔：曝光高时出现
+  if(state.exposure>40&&Math.random()<0.15&&state.day>3&&!state.messages.some(m=>m.type==='paparazzi'&&!m.replied)){
+    const msgs=NEGATIVE_MSGS.paparazzi;
+    const msg=pick(msgs);
+    addMessage('paparazzi','🕵️',pick(SENDERS.paparazzi),msg.text,msg.type);
+  }
+  // 黑粉：人气高时出现
+  if(state.popularity>30&&Math.random()<0.1&&state.day>5&&!state.messages.some(m=>m.type==='antifan'&&!m.replied)){
+    const msgs=NEGATIVE_MSGS.antifan;
+    const msg=pick(msgs);
+    addMessage('antifan','😈',pick(SENDERS.antifan),msg.text,msg.type);
+  }
+  // 对家：才华高或有工作时出现
+  if(state.talent>30&&Math.random()<0.1&&state.day>8&&!state.messages.some(m=>m.type==='rival'&&!m.replied)){
+    const msgs=NEGATIVE_MSGS.rival;
+    const msg=pick(msgs);
+    addMessage('rival','💀',pick(SENDERS.rival),msg.text,msg.type);
+  }
+
   if(state.messages.length>40)state.messages=state.messages.slice(-40);
 }
 
@@ -1213,16 +1254,16 @@ function checkAchievements(){
    ================================================================ */
 function drawRadar(){
   const ca=document.getElementById('radar-canvas');const ctx=ca.getContext('2d');
-  const w=ca.width,h=ca.height,cx=w/2,cy=h/2-2,r=Math.min(cx,cy)-18;
+  const w=ca.width,h=ca.height,cx=w/2,cy=h/2,r=Math.min(cx,cy)-24;
   ctx.clearRect(0,0,w,h);
-  const items=[{label:'颜值',val:state.beauty,color:'#ff6b9d'},{label:'才艺',val:state.talent,color:'#a855f7'},{label:'体力',val:state.stamina,color:'#34d399'},{label:'人气',val:state.popularity,color:'#fbbf24'},{label:'情商',val:state.eq,color:'#60a5fa'}];
+  const items=[{label:'💎颜值',val:state.beauty,color:'#ff6b9d'},{label:'🎵才艺',val:state.talent,color:'#a855f7'},{label:'⚡体力',val:state.stamina,color:'#34d399'},{label:'🔥人气',val:state.popularity,color:'#fbbf24'},{label:'💬情商',val:state.eq,color:'#60a5fa'}];
   const n=items.length;
   for(let ri=1;ri<=4;ri++){const rr=(ri/4)*r;ctx.beginPath();for(let i=0;i<=n;i++){const a=(Math.PI*2/n)*i-Math.PI/2;const x=cx+rr*Math.cos(a),y=cy+rr*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.strokeStyle='rgba(200,200,220,0.3)';ctx.lineWidth=1;ctx.stroke()}
   for(let i=0;i<n;i++){const a=(Math.PI*2/n)*i-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.strokeStyle='rgba(200,200,220,0.3)';ctx.stroke()}
   ctx.beginPath();for(let i=0;i<=n;i++){const idx=i%n,val=items[idx].val/100;const a=(Math.PI*2/n)*i-Math.PI/2;const x=cx+r*val*Math.cos(a),y=cy+r*val*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.closePath();ctx.fillStyle='rgba(255,107,157,0.15)';ctx.fill();ctx.strokeStyle='#ff6b9d';ctx.lineWidth=2;ctx.stroke();
-  for(let i=0;i<n;i++){const val=items[i].val/100;const a=(Math.PI*2/n)*i-Math.PI/2;const x=cx+r*val*Math.cos(a),y=cy+r*val*Math.sin(a);ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle=items[i].color;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}
-  ctx.font='10px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  for(let i=0;i<n;i++){const a=(Math.PI*2/n)*i-Math.PI/2,lr=r+16;ctx.fillStyle='#7b4a5e';ctx.fillText(items[i].label+' '+items[i].val,cx+lr*Math.cos(a),cy+lr*Math.sin(a))}
+  for(let i=0;i<n;i++){const val=items[i].val/100;const a=(Math.PI*2/n)*i-Math.PI/2;const x=cx+r*val*Math.cos(a),y=cy+r*val*Math.sin(a);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=items[i].color;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}
+  ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<n;i++){const a=(Math.PI*2/n)*i-Math.PI/2,lr=r+20;ctx.fillStyle='#7b4a5e';ctx.fillText(items[i].label+' '+items[i].val,cx+lr*Math.cos(a),cy+lr*Math.sin(a))}
 }
 
 function renderQuickStats(){
@@ -1290,99 +1331,234 @@ function renderMessages(){
   const unreadAll=msgs.filter(m=>!m.read).length;
 
   // 消息分类标签
-  const types=[
-    {id:'all',label:`全部${unreadAll>0?' · '+unreadAll:''}`},
-    {id:'agent',label:'经纪人'},
-    {id:'fan',label:'粉丝'},
-    {id:'media',label:'媒体'},
-    {id:'brand',label:'品牌'},
-    {id:'fanclub',label:'后援会'}
+  const threadTypes=[
+    {id:'all',label:'全部'+(unreadAll>0?' · '+unreadAll:'')},
+    {id:'agent',label:'👩‍💼经纪人',icon:'👩‍💼'},
+    {id:'fan',label:'💕粉丝',icon:'💕'},
+    {id:'media',label:'📰媒体',icon:'📰'},
+    {id:'brand',label:'🏪品牌',icon:'🏪'},
+    {id:'fanclub',label:'🌟后援会',icon:'🌟'},
+    {id:'paparazzi',label:'🕵️狗仔',icon:'🕵️'},
+    {id:'antifan',label:'😈黑粉',icon:'😈'},
+    {id:'rival',label:'💀对家',icon:'💀'}
   ];
-  tabs.innerHTML=types.map(t=>`<button class="msg-tab-btn ${state.msgTab===t.id?'active':''}" data-tab="${t.id}">${t.label}</button>`).join('');
+  tabs.innerHTML=threadTypes.map(t=>`<button class="msg-tab-btn ${state.msgTab===t.id?'active':''}" data-tab="${t.id}">${t.label}</button>`).join('');
   tabs.querySelectorAll('.msg-tab-btn').forEach(btn=>{
     btn.addEventListener('click',function(){
       state.msgTab=this.dataset.tab;renderMessages();soundClick();
     });
   });
 
+  // 按NPC线程分组
+  const threads={};
+  msgs.forEach(m=>{
+    const key=m.type||'other';
+    if(!threads[key])threads[key]=[];
+    threads[key].push(m);
+  });
+
   // 过滤
-  let filtered=state.msgTab==='all'?msgs:msgs.filter(m=>m.type===state.msgTab);
-  if(filtered.length===0){
+  let filteredTypes=Object.keys(threads);
+  if(state.msgTab!=='all')filteredTypes=filteredTypes.filter(t=>t===state.msgTab);
+
+  if(filteredTypes.length===0){
     el.innerHTML='<div style="text-align:center;padding:20px;color:#ccc;font-size:14px">📭 暂无消息</div>';return;
   }
 
-  el.innerHTML=filtered.map(m=>`<div class="msg-item" data-id="${m.id}">
-    <div class="avatar">${m.icon||'💬'}</div>
-    <div class="body">
-      <div class="sender">${m.sender||'未知'} <span class="tag">${m.label||''}</span></div>
-      <div class="preview">${m.text||''}${m.replies&&m.replies.length>0?' · 💬已回复':''}</div>
-      <div class="time">第${m.day}天${m.read?'':' · 未读'}</div>
-    </div>
-    ${!m.read?'<div class="badge-dot"></div>':''}
-  </div>`).join('');
+  // 线程排序：有未读的优先
+  filteredTypes.sort((a,b)=>{
+    const aUnread=threads[a].some(m=>!m.read)?1:0;
+    const bUnread=threads[b].some(m=>!m.read)?1:0;
+    return bUnread-aUnread;
+  });
+
+  const threadMeta={
+    agent:{icon:'👩‍💼',name:'经纪人·杨姐',tag:'经纪人'},
+    fan:{icon:'💌',name:'粉丝们',tag:'粉丝'},
+    media:{icon:'📰',name:'媒体邀约',tag:'媒体'},
+    brand:{icon:'🏪',name:'品牌合作',tag:'品牌'},
+    fanclub:{icon:'🌟',name:'后援会',tag:'后援会'},
+    paparazzi:{icon:'🕵️',name:'狗仔队',tag:'⚠️危险'},
+    antifan:{icon:'😈',name:'黑粉',tag:'⚠️危险'},
+    rival:{icon:'💀',name:'对家',tag:'⚠️危险'}
+  };
+
+  el.innerHTML=filteredTypes.map(type=>{
+    const ms=threads[type];
+    const meta=threadMeta[type]||{icon:'💬',name:'未知',tag:''};
+    const last=ms[ms.length-1];
+    const unread=ms.some(m=>!m.read);
+    const count=ms.length;
+    return `<div class="msg-item" data-thread="${type}">
+      <div class="avatar">${meta.icon}</div>
+      <div class="body">
+        <div class="sender">${meta.name} <span class="tag">${meta.tag} · ${count}条</span></div>
+        <div class="preview">${last?last.text:'暂无消息'}</div>
+        <div class="time">最新：第${last?last.day:'?'}天${unread?' · 💬未读':''}</div>
+      </div>
+      ${unread?'<div class="badge-dot"></div>':''}
+    </div>`;
+  }).join('');
 
   el.querySelectorAll('.msg-item').forEach(item=>{
     item.addEventListener('click',function(){
-      const id=this.dataset.id;
-      const msg=msgs.find(m=>m.id===id);
-      if(!msg)return;
-      msg.read=true;
-      showMessageDetail(msg);
+      const type=this.dataset.thread;
+      showChatWindow(type);
       soundClick();
     });
   });
 }
 
-function showMessageDetail(msg){
+// NPC聊天窗口——显示完整对话历史
+function showChatWindow(type){
   const con=document.getElementById('modal-container');
-  const replies=msg.replies||[];
-  const stage=getStage(state.day);
+  const msgs=(state.messages||[]).filter(m=>m.type===type);
+  const meta={
+    agent:{icon:'👩‍💼',name:'经纪人·杨姐',color:'#fce4ec'},
+    fan:{icon:'💌',name:'粉丝们',color:'#e8f5e9'},
+    media:{icon:'📰',name:'媒体邀约',color:'#e3f2fd'},
+    brand:{icon:'🏪',name:'品牌合作',color:'#fff8e1'},
+    fanclub:{icon:'🌟',name:'后援会',color:'#f3e5f5'},
+    paparazzi:{icon:'🕵️',name:'狗仔队',color:'#fef2f2'},
+    antifan:{icon:'😈',name:'黑粉',color:'#fef2f2'},
+    rival:{icon:'💀',name:'对家',color:'#fef2f2'}
+  }[type]||{icon:'💬',name:'聊天',color:'#f5f5f5'};
+
+  // 标记该线程所有消息为已读
+  msgs.forEach(m=>m.read=true);
+
+  // 检查NPC类型是否危险
+  const isNegative=['paparazzi','antifan','rival'].includes(type);
 
   con.className='modal-overlay chat-modal';
-  let chatHtml=replies.map(r=>`<div class="chat-bubble ${r.self?'self':''}">${r.text}${r.self&&r.time?`<div style="font-size:9px;opacity:0.6;margin-top:4px">${r.time}</div>`:''}</div>`).join('');
+  let chatHtml='';
+  let lastDay=0;
 
-  // 生成一些可选择回复（已回复过就不再显示）
-  let replyOptions='';
-  const alreadyReplied=msg.replied||replies.some(r=>r.self);
-  if(!alreadyReplied){
-    if(msg.type==='agent'){
-    const opts=['好的杨姐，我会努力的💪','收到！放心吧😊','明白了～','谢谢杨姐关心！'];
-    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
-  }else if(msg.type==='fan'){
-    const opts=['谢谢支持！一起走花路吧🌸','收到你的爱啦💕','我会继续加油的！🌟'];
-    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
-  }else if(msg.type==='media'){
-    const opts=['请联系经纪人洽谈📩','很有兴趣！发方案来看看✨','这周档期满了抱歉🙏'];
-    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
-  }else if(msg.type==='brand'){
-    const opts=['合作可以谈，请联系经纪人💼','很感兴趣！期待合作✨','谢谢认可！发详细方案？'];
-    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
-  }else if(msg.type==='fanclub'){
-    const opts=['辛苦大家了！💕','太用心了😭','有你们真好！🌟'];
-    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
-  }
+  // 时间分隔线
+  msgs.forEach(m=>{
+    if(m.day!==lastDay){chatHtml+=`<div style="text-align:center;font-size:10px;color:#ccc;margin:8px 0">—— 第${m.day}天 ——</div>`;lastDay=m.day}
+    chatHtml+=`<div class="chat-bubble ${isNegative?'':'na'}">${m.text}<div style="font-size:9px;color:#999;margin-top:3px">${m.label||''} · 第${m.day}天</div></div>`;
+    if(m.replies){
+      m.replies.forEach(r=>{
+        chatHtml+=`<div class="chat-bubble self">${r.text}<div style="font-size:9px;opacity:0.6;margin-top:3px">${r.time||''}</div></div>`;
+      });
+    }
+  });
+
+  // 查找是否有未回复的最近一条消息
+  const lastMsg=msgs.length>0?msgs[msgs.length-1]:null;
+  const canReply=lastMsg&&!lastMsg.replied;
+
+  // 回复选项（基于NPC类型，回复会影响关系）
+  let replyOpts='';
+  if(canReply){
+    const replies=getReplyOptions(type,lastMsg);
+    replyOpts=replies.map(r=>`<div class="r-opt" data-reply='${JSON.stringify(r).replace(/'/g,"&#39;")}'>${r.text}</div>`).join('');
   }
 
-  con.innerHTML=`<div class="modal" style="padding:16px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:28px">${msg.icon||'💬'}</span><div><div style="font-weight:600;color:#2d1a2e;font-size:14px">${msg.sender||'未知'}</div><div style="font-size:11px;color:#999">${msg.label||''} · 第${msg.day}天</div></div></div>
-    <div class="chat-area">
-      <div class="chat-bubble">${msg.text}</div>
-      ${chatHtml}
-      ${replyOptions?`<div class="chat-bubble self" style="background:var(--pink);color:#fff;">快捷回复：${replyOptions}</div>`:alreadyReplied?'<div class="chat-bubble self" style="background:#e0e0e0;color:#999;font-size:12px">💬 已回复</div>':''}
+  const headerColor=isNegative?'#fef2f2':meta.color;
+  con.innerHTML=`<div class="modal" style="padding:14px;max-height:80vh">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:${headerColor};border-radius:12px">
+      <span style="font-size:28px">${meta.icon}</span>
+      <div>
+        <div style="font-weight:600;color:#2d1a2e;font-size:14px">${meta.name}</div>
+        <div style="font-size:11px;color:#999">${isNegative?'⚠️ 谨慎回应，你的选择会影响局势':msgs.length+'条消息'}</div>
+      </div>
     </div>
-    <button class="btn btn-pink close-btn" id="chat-close" style="margin-top:8px;min-width:100px">关闭</button>
+    <div class="chat-area">
+      ${chatHtml||'<div style="text-align:center;color:#ccc;padding:20px">暂无消息记录</div>'}
+      ${replyOpts?`<div style="margin-top:8px;padding:8px 10px;background:var(--pink);border-radius:12px;color:#fff;align-self:flex-end">
+        <div style="font-size:11px;margin-bottom:4px;opacity:0.8">💬 回复${type==='paparazzi'?'狗仔':type==='antifan'?'黑粉':type==='rival'?'对家':''}：</div>
+        ${replyOpts}
+      </div>`:''}
+      ${!canReply&&msgs.length>0?'<div style="text-align:center;font-size:11px;color:#ccc;margin-top:6px">✅ 已回复过该消息</div>':''}
+    </div>
+    <button class="btn btn-pink close-btn" id="chat-win-close" style="margin-top:8px;min-width:100px">关闭</button>
   </div>`;
 
-  con.querySelector('#chat-close').addEventListener('click',()=>{con.classList.add('hidden');renderMessages();saveGame()});
+  con.querySelector('#chat-win-close').addEventListener('click',()=>{
+    con.classList.add('hidden');renderMessages();saveGame()
+  });
 
   // 回复功能
   con.querySelectorAll('.r-opt').forEach(opt=>{
     opt.addEventListener('click',function(){
-      const text=this.dataset.reply;
-      replyMessage(msg.id,text);
-      showMessageDetail(msg);
+      const replyData=JSON.parse(this.dataset.reply);
+      // 应用回复效果
+      const eff=replyData.eff||{};
+      for(const[k,v]of Object.entries(eff)){
+        if(k==='fans'&&v>-1&&v<1){const a=Math.floor(state.fans*Math.abs(v));changeStat('fans',v<0?-a:a,false)}
+        else changeStat(k,v,false);
+      }
+      // 关系影响
+      const rel=replyData.rel||{};
+      if(!state.relations)state.relations=initRelations();
+      for(const[k,v]of Object.entries(rel)){
+        if(state.relations[k]!==undefined)state.relations[k]=clamp(state.relations[k]+v,0,100);
+      }
+      // 标记已回复
+      if(lastMsg){lastMsg.replied=true;if(!lastMsg.replies)lastMsg.replies=[];lastMsg.replies.push({text:replyData.text,time:'刚刚',self:true})}
+      addLog(`💬 回复${meta.name}：${replyData.text}`);
+      if(replyData.msg)showToast(replyData.msg);
+      if(replyData.eff&&Object.values(replyData.eff).some(v=>v<0))soundBad();else soundGood();
+      showChatWindow(type);
+      renderAll();saveGame();
     });
   });
+}
+
+// 获取每个NPC类型的回复选项（含关系影响）
+function getReplyOptions(type,msg){
+  const base={
+    agent:[
+      {text:'好的杨姐，我会努力的💪',eff:{},rel:{agent:3},msg:'杨姐很欣慰'},
+      {text:'收到！放心吧😊',eff:{},rel:{agent:2},msg:'杨姐点了点头'},
+      {text:'知道了，我会注意的',eff:{eq:1},rel:{agent:1}},
+      {text:'……(已读不回)',eff:{},rel:{agent:-5},msg:'杨姐有点失望'}
+    ],
+    fan:[
+      {text:'谢谢大家的支持💕',eff:{popularity:1},rel:{fans:2},msg:'粉丝们超开心！'},
+      {text:'一起走花路吧🌸',eff:{popularity:2,fans:100},rel:{fans:3}},
+      {text:'最近在准备新作品哦🎵',eff:{talent:1},rel:{fans:1}},
+      {text:'……(已读不回)',eff:{},rel:{fans:-3},msg:'粉丝有点失落'}
+    ],
+    media:[
+      {text:'请联系经纪人洽谈📩',eff:{},rel:{brand:1},msg:'媒体联系了杨姐'},
+      {text:'有兴趣！发方案来看看✨',eff:{popularity:3},rel:{brand:2}},
+      {text:'这周档期满了抱歉🙏',eff:{},rel:{brand:-2}},
+      {text:'……(已读不回)',eff:{},rel:{brand:-3},msg:'对方找了别人'}
+    ],
+    brand:[
+      {text:'合作可以谈，请联系经纪人💼',eff:{money:200},rel:{brand:3},msg:'品牌方很期待！'},
+      {text:'很感兴趣！具体方案？✨',eff:{money:100},rel:{brand:2}},
+      {text:'最近档期比较满',eff:{},rel:{brand:-2}},
+      {text:'……(已读不回)',eff:{},rel:{brand:-4}}
+    ],
+    fanclub:[
+      {text:'辛苦大家了！💕',eff:{popularity:2},rel:{fans:3},msg:'后援会干劲十足！'},
+      {text:'太用心了😭',eff:{},rel:{fans:2}},
+      {text:'有你们真好！🌟',eff:{popularity:1,fans:200},rel:{fans:4}},
+      {text:'……(已读不回)',eff:{},rel:{fans:-4}}
+    ],
+    paparazzi:[
+      {text:'💸 花钱摆平',eff:{money:-800,exposure:-5},rel:{agent:2},msg:'狗仔拿了钱走了……'},
+      {text:'🚔 报警处理',eff:{eq:5,exposure:3,popularity:3},rel:{fans:5,agent:3},msg:'粉丝支持你维权！'},
+      {text:'😰 求你们别发',eff:{money:-300,exposure:8},rel:{agent:-3,fans:-3},msg:'狗仔得寸进尺！'}
+    ],
+    antifan:[
+      {text:'😤 直接拉黑',eff:{eq:-1},rel:{fans:2},msg:'粉丝觉得你很酷'},
+      {text:'🎤 用作品回应',eff:{talent:5,popularity:5},rel:{fans:5},msg:'新舞台打了黑粉的脸！'},
+      {text:'😭 忍不住对骂',eff:{eq:-5,popularity:-3},rel:{fans:-5,agent:-3},msg:'被截图了……'}
+    ],
+    rival:[
+      {text:'🏆 正面竞争！',eff:{popularity:5,talent:3},rel:{brand:3,agent:3},need:{talent:50}},
+      {text:'🤝 公平竞争就好',eff:{eq:3},rel:{brand:1}},
+      {text:'😤 别来惹我',eff:{eq:-2,popularity:2},rel:{fans:3,agent:-2}}
+    ]
+  };
+  const opts=base[type]||base.fan;
+  // 检查条件
+  return opts.filter(o=>{if(!o.need)return true;return Object.entries(o.need).every(([k,v])=>(state[k]||0)>=v)});
 }
 
 function renderSchedule(){
@@ -1442,12 +1618,35 @@ function renderSchedule(){
 
 function renderProfile(){
   drawRadar();
-  // 属性
+  // 属性（带说明）
+  const statHelp={
+    beauty:'💎 颜值越高，品牌代言费越高，美容效果越好',
+    talent:'🎵 才艺决定事件成功率、工作质量，阶段1必须≥50',
+    stamina:'⚡ 体力是行动的基础，体力<20部分行动受限',
+    popularity:'🔥 人气影响粉丝增长速度、热搜频率，阶段2必须≥30',
+    eq:'💬 情商影响危机处理能力、NPC关系修复、绯闻伤害减免',
+    money:'💰 每天自动扣200生活费，阶段3必须≥5000',
+    fans:'👥 粉丝是影响力的核心，各种结局都需要粉丝支撑',
+    exposure:'📸 曝光>50需花钱公关，>70锁行动，>85可能塌房'
+  };
   document.getElementById('profile-stats').innerHTML=[
-    {l:'💎颜值',v:state.beauty},{l:'🎵才艺',v:state.talent},{l:'⚡体力',v:state.stamina},
-    {l:'🔥人气',v:state.popularity},{l:'💬情商',v:state.eq},{l:'💰金钱',v:state.money,c:'pink'},
-    {l:'👥粉丝',v:formatNum(state.fans),c:'pink'},{l:'📸曝光',v:state.exposure+'%'}
-  ].map(s=>`<div class="profile-stat"><span class="s-label">${s.l}</span><span class="s-val ${s.c||''}">${s.v}</span></div>`).join('');
+    {l:'💎颜值',v:state.beauty,help:statHelp.beauty},{l:'🎵才艺',v:state.talent,help:statHelp.talent},
+    {l:'⚡体力',v:state.stamina,help:statHelp.stamina},{l:'🔥人气',v:state.popularity,help:statHelp.popularity},
+    {l:'💬情商',v:state.eq,help:statHelp.eq},{l:'💰金钱',v:state.money,c:'pink',help:statHelp.money},
+    {l:'👥粉丝',v:formatNum(state.fans),c:'pink',help:statHelp.fans},{l:'📸曝光',v:state.exposure+'%',help:statHelp.exposure}
+  ].map(s=>`<div class="profile-stat stat-item" data-help="${s.help||''}">
+    <span class="s-label">${s.l}</span>
+    <span class="s-val ${s.c||''}">${s.v}</span>
+  </div>`).join('');
+
+  // 点击属性显示说明
+  document.querySelectorAll('.stat-item').forEach(el=>{
+    el.addEventListener('click',function(){
+      const help=this.dataset.help;
+      if(!help)return;
+      showToast(help);
+    });
+  });
 
   // 关系
   if(state.relations){
