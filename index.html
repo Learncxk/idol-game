@@ -448,7 +448,7 @@ const TRENDING_POOL=[
 
 // 评论生成（更像真人）
 const COMMENT_USERS=[
-  {name:'追星小仙女✨',style:'excitable'},
+  {name:'追星小能手✨',style:'excitable'},
   {name:'今天也在摸鱼',style:'neutral'},
   {name:'娱乐圈打工人',style:'insider'},
   {name:'草莓味的風🍓',style:'cute'},
@@ -464,7 +464,7 @@ const COMMENT_USERS=[
   {name:'甜甜圈杀手🍩',style:'cute'},
   {name:'柠檬精本精🍋',style:'salty'},
   {name:'路人甲',style:'neutral'},
-  {name:'资深追星狗',style:'excitable'},
+  {name:'资深追星族',style:'excitable'},
   {name:'瓜田里的猹',style:'gossip'},
   {name:'今天也好想睡觉',style:'lazy'},
   {name:'理智粉代表🎀',style:'rational'},
@@ -561,10 +561,10 @@ const COMMENT_STYLES={
 
 // 消息发送人池
 const SENDERS={
-  fan:['追星小粉丝💕','星星守护者🌟','你的小迷妹🌸','idol后援会','忠实听众🎵','从练习生就关注你'],
+  fan:['追星小粉丝💕','星星守护者🌟','你的小粉丝🌸','idol后援会','忠实听众🎵','从练习生就关注你'],
   media:['娱乐周刊📰','时尚COSMO','星访谈节目组','娱乐星探','每日文娱'],
   brand:['LUXURY美妆','XX服饰品牌方','潮牌SUPREME','饮品代言合作','珠宝品牌挚友'],
-  fanclub:['粉头小助理','后援会会长','粉丝管理组','应援站站长'],
+  fanclub:['粉丝小助理','后援会会长','粉丝管理组','应援站站长'],
   // 负面NPC
   paparazzi:['狗仔队·阿强','偷拍工作室','八卦周刊','娱记小李'],
   antifan:['黑粉头子·键盘侠','职业黑粉','恶意营销号'],
@@ -953,7 +953,7 @@ function changeStat(name,delta,showF=true){
   if(!state||delta===0)return delta;
   const old=state[name];
   if(name==='fans'){state[name]=Math.max(0,Math.floor(state[name]+delta))}
-  else if(name==='money'){state[name]=Math.max(0,state[name]+delta)}
+  else if(name==='money'){state[name]=state[name]+delta}
   else if(name==='exposure'){state[name]=clamp(state[name]+delta,0,100)}
   else if(name==='stamina'){state[name]=clamp(state[name]+delta,0,100)}
   else{state[name]=clamp(state[name]+delta,0,100)}
@@ -1252,7 +1252,16 @@ function executeAction(actionId){
   if(action.stat&&action.min!=null){const v=rand(action.min,action.max);changeStat(action.stat,v);const lb={talent:'才艺',beauty:'颜值'}[action.stat]||action.stat;msg+=` ${lb}+${v}`}
   if(action.popMin!=null){const v=rand(action.popMin,action.popMax);changeStat('popularity',v);msg+=` 人气+${v}`}
   if(action.eqMin!=null){const v=rand(action.eqMin,action.eqMax);changeStat('eq',v);msg+=` 情商+${v}`}
-  if(action.moneyMin!=null){const v=rand(action.moneyMin,action.moneyMax);changeStat('money',v);msg+=` 💰+${v}`}
+  if(action.moneyMin!=null){
+    let v=rand(action.moneyMin,action.moneyMax);
+    // 工作收入动态计算（基于颜值+才艺+人气）
+    if(actionId==='work'){
+      const bonus=Math.floor((state.beauty||0)*0.3+(state.talent||0)*0.5+(state.popularity||0)*0.7);
+      v+=Math.floor(bonus*rand(8,15)/10);
+      msg+=` 💰+${v} (含能力加成+${bonus})`;
+    }else{msg+=` 💰+${v}`}
+    changeStat('money',v,false);
+  }
   if(action.staminaMin!=null){const v=rand(action.staminaMin,action.staminaMax);changeStat('stamina',v);msg+=` 🛌体力+${v}`}
 
   if(actionId==='train')state.totalTrainDays=(state.totalTrainDays||0)+1;
@@ -1379,17 +1388,31 @@ function endDay(){
   else if(vibe&&vibe.buff==='luck')state.luck=clamp(state.luck+vibe.buffAmt,0,100);
 
   // ===== 每日生活费 =====
-  if(state.day>1&&state.money<DAILY_COST){
-    state.moneyDebt=(state.moneyDebt||0)+1;
-    changeStat('stamina',-5,false);
-    addLog('💸 没钱交生活费了……体力-5','flavor');
-    if(state.moneyDebt>3){
-      showGameOver('破产了 😢','连续多日入不敷出，你付不起房租和生活费，不得不回老家……');
-      return;
-    }
-  }else if(state.day>1){
+  if(state.day>1){
     changeStat('money',-DAILY_COST,false);
-    state.moneyDebt=0;
+    if(state.money<0){
+      state.moneyDebt=(state.moneyDebt||0)+1;
+      changeStat('popularity',-2,false);
+      changeStat('stamina',-3,false);
+      addLog(`💸 负债${Math.abs(state.money)}！人气-2 体力-3`,'flavor');
+      // 负债累积惩罚
+      if(state.moneyDebt>=2&&state.moneyDebt<4){
+        addMessage('agent','👩‍💼','经纪人杨姐','怎么又没钱了？你最近没工作吗？😰','经纪人');
+      }else if(state.moneyDebt>=4){
+        changeStat('fans',-Math.floor(state.fans*0.02),false);
+        addLog('📉 负债过高导致粉丝流失！','gossip');
+        if(Math.random()<0.3){
+          addMessage('media','📰',pick(SENDERS.media),'听说你最近财务出了问题？想做个专访聊聊吗？','媒体');
+        }
+        if(state.moneyDebt>6){
+          showGameOver('破产了 😢','连续多日入不敷出，债务雪崩，你不得不宣布破产……');
+          return;
+        }
+      }
+    }else if(state.moneyDebt>0){
+      state.moneyDebt=0;
+      addLog('💰 还清债务了！','flavor');
+    }
   }
 
   // ===== 每日自动增长 =====
