@@ -152,7 +152,7 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
 /* ===== 底部导航 ===== */
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:420px;width:100%;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);display:flex;justify-content:space-around;padding:5px 0 calc(5px + var(--safe-bottom));border-top:1px solid rgba(0,0,0,0.06);z-index:30}
 .nav-item{display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 10px;border:none;background:none;cursor:pointer;transition:all .2s;font-size:9px;color:#999;min-width:48px;touch-action:manipulation}
-.nav-item .nav-icon{font-size:20px;transition:transform .2s}
+.nav-item .nav-icon{font-size:20px;transition:transform .2s;position:relative}
 .nav-item.active{color:var(--dark-pink)}
 .nav-item.active .nav-icon{transform:scale(1.1)}
 .nav-item:active .nav-icon{transform:scale(0.9)}
@@ -341,7 +341,7 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
   <!-- 底部导航 -->
   <div class="bottom-nav" id="bottom-nav">
     <button class="nav-item active" data-page="home"><span class="nav-icon">🏠</span>首页</button>
-    <button class="nav-item" data-page="msg"><span class="nav-icon">💬</span>消息</button>
+    <button class="nav-item" data-page="msg"><span class="nav-icon">💬<span id="msg-badge" class="hidden" style="position:absolute;top:-4px;right:-8px;width:10px;height:10px;background:#f43f5e;border-radius:50%;border:2px solid #fff"></span></span>消息</button>
     <button class="nav-item" data-page="schedule"><span class="nav-icon">📋</span>日程</button>
     <button class="nav-item" data-page="profile"><span class="nav-icon">👤</span>档案</button>
     <button class="nav-item" data-page="more"><span class="nav-icon">⚙️</span>更多</button>
@@ -424,14 +424,140 @@ const ENDINGS=[
 
 // 热搜话题池
 const TRENDING_POOL=[
-  {cat:'ent',tpl:['{idol}新剧开机路透','{idol}机场私服曝光','年度最佳新人奖揭晓','当红女团回归预告','某顶流恋情疑似曝光','粉丝应援新高度','音乐榜单大洗牌','综艺节目创意大赛','娱乐圈年度收入榜','新晋导演作品口碑爆棚','明星街拍穿搭大赛','公益盛典明星阵容','短视频平台爆款舞蹈','粉丝投票最受欢迎爱豆']},
+  {cat:'ent',tpl:[
+    '震惊！{idol}新剧路透流出，这造型绝了💥',
+    '{idol}机场被拍，素颜状态也太能打了吧👀',
+    '年度最佳新人奖揭晓！大热人选竟是……🏆',
+    '当红女团回归预告片播放量破千万🎬',
+    '某顶流深夜约会被拍，工作室火速回应🔥',
+    '粉丝应援新高度：包下整栋楼投屏😱',
+    '音乐榜单大洗牌，这匹黑马是谁？📊',
+    '爆款综艺官宣新一季阵容，有你期待的TA吗📺',
+    '娱乐圈年度收入榜出炉，第一名居然是……💰',
+    '新晋导演处女作口碑爆棚，豆瓣开分9.0🎥',
+    '明星街拍红黑榜：这身穿搭你打几分？👗',
+    '公益盛典明星阵容官宣，众星云集🌟',
+    '短视频平台爆款舞蹈挑战，你也来试试？💃',
+    '年度最受欢迎爱豆投票通道开启！快去投票🗳️',
+    '热议：偶像到底该不该谈恋爱？💔',
+    '时尚周明星造型大盘点，谁是你心中的最佳？✨',
+    '新综艺预告片信息量超大！网友扒出细节🔍',
+    '票选最想合作的荧幕CP，你嗑哪一对？💕'
+  ]},
 ];
 
-// 评论生成
-const COMMENT_USERS=['追星小仙女✨','吃瓜群众A','娱乐速递','草莓味的风🍓','月亮不睡我不睡🌙','每天都要开心鸭🦆','娱乐圈观察员','奶茶续命中🧋','今天也在追星🌟','吃瓜第一名🍉','追光者','星星点灯✨','娱乐小喇叭📢','甜甜圈本甜🍩','柠檬精本精🍋','路人甲','资深追星狗','瓜田里的猹','彩虹屁专营','理智粉代表'];
-const COMMENTS_EXCITED=['啊啊啊啊啊我死了！！😍','老公/老婆！！','这谁顶得住啊🆘','我的眼睛享福了👀','好美好帅好可爱！！','每日一遍净化心灵✨','路转粉了路转粉了！'];
-const COMMENTS_NEUTRAL=['有点意思🤔','期待期待！！','啥时候回归啊啊啊','支持！走花路吧🌸','这波操作666👏','不错不错继续加油','关注了关注了'];
-const COMMENTS_CRITICAL=['就这？？🤮','不是吧这也能吹','黑粉别来沾边','营销号滚啊','能不能专注作品','审美降级了属于是'];
+// 评论生成（更像真人）
+const COMMENT_USERS=[
+  {name:'追星小仙女✨',style:'excitable'},
+  {name:'今天也在摸鱼',style:'neutral'},
+  {name:'娱乐圈打工人',style:'insider'},
+  {name:'草莓味的風🍓',style:'cute'},
+  {name:'月亮不睡我不睡🌙',style:'nightowl'},
+  {name:'每天都要开心鸭🦆',style:'positive'},
+  {name:'吃瓜群众A',style:'neutral'},
+  {name:'奶茶续命中🧋',style:'cute'},
+  {name:'今天也在追星🌟',style:'excitable'},
+  {name:'吃瓜第一名🍉',style:'gossip'},
+  {name:'追光者',style:'positive'},
+  {name:'星星点灯✨',style:'cute'},
+  {name:'娱乐小喇叭📢',style:'insider'},
+  {name:'甜甜圈杀手🍩',style:'cute'},
+  {name:'柠檬精本精🍋',style:'salty'},
+  {name:'路人甲',style:'neutral'},
+  {name:'资深追星狗',style:'excitable'},
+  {name:'瓜田里的猹',style:'gossip'},
+  {name:'今天也好想睡觉',style:'lazy'},
+  {name:'理智粉代表🎀',style:'rational'},
+  {name:'互联网嘴替',style:'savage'},
+  {name:'高贵路人',style:'neutral'}
+];
+
+// 各种风格的评论模板（更有人味儿）
+const COMMENT_STYLES={
+  excitable:[
+    '啊啊啊啊啊啊我死了！！！！😍😍😍',
+    '老公/老婆！！！！我来晚了！！！',
+    '这谁顶得住啊🆘🆘🆘 我报警了',
+    '我的眼睛享福了👀每日一遍治愈心灵',
+    '好美好帅好可爱！！我要拿去当壁纸！',
+    '路转粉了路转粉了！这就去关注！！',
+    '我不允许还没人看过这个！！太绝了',
+    '呜呜呜呜呜怎么这么好看啊😭'
+  ],
+  neutral:[
+    '有点意思🤔关注看看',
+    '期待一下后续发展～',
+    '还不错诶，比想象中好',
+    '加油吧，希望能看到更多作品',
+    '路人表示观感还可以',
+    '刷到了，留个脚印👣'
+  ],
+  cute:[
+    '好喜欢好喜欢好喜欢！！💕',
+    '今天也是为美貌流泪的一天💖',
+    '存图存到手软！！太好看啦',
+    '每天一遍净化心灵✨',
+    '太可爱了吧！！被萌哭了🥹',
+    '啊啊啊这个笑容我承包了！'
+  ],
+  gossip:[
+    '我去？？真的假的？？🍉',
+    '蹲一个后续，感觉还有料',
+    '这瓜保熟吗？？我先吃为敬',
+    '娱乐圈果然每天都有新故事🤔',
+    '有没有课代表总结一下，刚来',
+    '前排兜售瓜子饮料矿泉水🥤'
+  ],
+  insider:[
+    '圈内人表示……事情没那么简单🤫',
+    '我听说内部其实还有隐情',
+    '这个瓜我早就知道了，终于爆出来了',
+    '作为业内人士只能说，你们看到的是冰山一角',
+    '懂的都懂，不懂的说了也不懂🤐'
+  ],
+  savage:[
+    '就这？？？认真的吗🤮',
+    '这也能吹？？？审美呢',
+    '不是吧阿sir，这届网友真好骗',
+    '建议去看看真的好的，别在这浪费时间',
+    '营销号又开始上班了是吧'
+  ],
+  positive:[
+    '一直都很棒！继续保持！🌟',
+    '看着你一步步成长真的很感动😭',
+    '努力的人值得被看见！加油！',
+    '不管别人怎么说，做自己就好💪',
+    '支持！走花路吧🌸'
+  ],
+  rational:[
+    '理性讨论：这个数据确实能打📊',
+    '客观说，这次表现比之前进步了',
+    '不吹不黑，有一说一确实可以',
+    '从专业角度看，这个选择是对的',
+    '建议粉丝理性一点，别给正主招黑'
+  ],
+  lazy:[
+    '看完只想说……好困😴',
+    '有没有课代表总结一下太长了',
+    '先马住 有空再看👀',
+    '字太多了不想看 有没有省流版',
+    '好累啊 刷到哪算哪吧'
+  ],
+  nightowl:[
+    '凌晨三点刷到这个……睡不着了',
+    '熬夜人的福利！深夜放毒🌙',
+    '只有我还没睡吗？？',
+    '深夜刷到好东西！值了值了',
+    '看完更睡不着了……谁负责😭'
+  ],
+  salty:[
+    '呵呵 就这？😒',
+    '有什么了不起的 我家哥哥更厉害',
+    '这也值得上热搜？？',
+    '资本推的而已 真以为自己是顶流了？',
+    '酸了酸了 但我不会承认的🍋'
+  ]
+};
 
 // 消息发送人池
 const SENDERS={
@@ -636,7 +762,22 @@ function checkQuests(){
   });
   news.forEach(n=>{
     Object.entries(n.reward||{}).forEach(([k,v])=>changeStat(k,v,true));
-    if(n.msg)showToast('✅ '+n.msg);
+    // 弹出精美任务完成框
+    const con=document.getElementById('modal-container');
+    const rewardStr=Object.entries(n.reward||{}).map(([k,v])=>{
+      const lbs={talent:'🎵才艺',popularity:'🔥人气',fans:'👥粉丝',money:'💰',eq:'💬情商',exposure:'📸曝光'};
+      return `${lbs[k]||k} +${v}`;
+    }).join(' ');
+    con.className='modal-overlay';
+    con.innerHTML=`<div class="modal" style="text-align:center;background:linear-gradient(135deg,#fce4ec,#fff9c4)">
+      <div style="font-size:44px;margin-bottom:6px">🎯</div>
+      <h2 style="color:#e8437a">任务完成！</h2>
+      <div style="font-size:18px;font-weight:700;margin:6px 0">${n.name}</div>
+      <div style="font-size:13px;color:#666">${n.msg||'恭喜！'}</div>
+      <div style="background:rgba(255,255,255,0.6);border-radius:10px;padding:8px;margin:10px 0;font-size:13px;color:#4caf50;font-weight:600">🎁 ${rewardStr}</div>
+      <button class="btn btn-pink close-btn" id="quest-close" style="min-width:100px">太棒了！🎉</button>
+    </div>`;
+    con.querySelector('#quest-close').addEventListener('click',()=>con.classList.add('hidden'));
     addLog('🎯 任务完成：'+n.name+(n.msg?' → '+n.msg:''));
     soundAch();
   });
@@ -983,18 +1124,58 @@ function generateTrending(){
 }
 
 function generateComments(title,isMine){
-  const count=rand(3,6);
+  const count=rand(4,8);
   const comments=[];
+  const usedNames=[];
+  const allStyles=Object.keys(COMMENT_STYLES);
+  // 确保不同类型评论混合
+  const styleWeights=isMine?['excitable','cute','positive','rational','salty','gossip','neutral']
+                         :['neutral','gossip','cute','excitable','savage','lazy','nightowl','positive','rational','salty','insider'];
   for(let i=0;i<count;i++){
-    const user=pick(COMMENT_USERS);
-    const styles=[COMMENTS_EXCITED,COMMENTS_NEUTRAL,COMMENTS_CRITICAL];
-    const style=pick(styles);
-    const text=pick(style);
+    let user;
+    do{user=pick(COMMENT_USERS)}while(usedNames.includes(user.name)&&usedNames.length<COMMENT_USERS.length);
+    usedNames.push(user.name);
+    const style=user.style||pick(styleWeights);
+    const pool=COMMENT_STYLES[style]||COMMENT_STYLES.neutral;
+    let text=pick(pool);
+    // 随机增加真人感细节
+    if(Math.random()<0.15)text+=' '+pick(['(刚看到)','(刷到了)','(首页刷到)','(朋友转给我的)','(热搜来的)']);
+    if(Math.random()<0.1)text=text.replace(/[！!]/g,'‼️');
+    if(Math.random()<0.08)text=text.replace(/[。.]/g,'……');
+    // 如果是关于玩家的，增加结合游戏状态的信息
+    if(isMine&&state){
+      if(state.exposure>50&&Math.random()<0.3)text+=' 不过这曝光是不是有点太高了……担心🤔';
+      if(state.popularity>60&&Math.random()<0.2)text+=' 最近真的好火啊到处都能刷到🔥';
+      if(state.beauty>70&&Math.random()<0.2)text+=' 这个颜值是真实存在的吗？？';
+    }
+    const timeOptions=['刚刚','3分钟前','8分钟前','15分钟前','23分钟前','半小时前','46分钟前','1小时前','2小时前','3小时前','5小时前'];
+    const time=rand(0,2)<2?pick(['刚刚','3分钟前','8分钟前']):pick(timeOptions);
     comments.push({
-      user,text,
-      likes:rand(10,9999),
-      time:rand(1,60)+'分钟前'
+      user:user.name,
+      text,
+      likes:rand(10,99999),
+      replies:rand(0,8),
+      time
     });
+  }
+  // 随机增加楼中楼回复（让评论更像真人社交）
+  if(comments.length>2){
+    const replyIdx=rand(0,comments.length-1);
+    const replyUsers=[pick(COMMENT_USERS).name,pick(COMMENT_USERS).name];
+    const replyTexts=[
+      pick(['回复错了不好意思！','同意！！','？？？你在说什么','确实是这样','哈哈哈哈哈哈','我也有同感！','你认真的吗？','点了点了👍']),
+      pick(['笑死我了哈哈哈哈','+1','nsdd','？？？','你说得对','不同意但尊重','吵起来吵起来！'])
+    ];
+    comments.splice(replyIdx+1,0,{
+      user:replyUsers[0],text:'回复 @'+pick(usedNames)+'：'+replyTexts[0],
+      likes:rand(1,999),replies:0,time:pick(['刚刚','1分钟前']),isReply:true
+    });
+    if(comments.length<8){
+      comments.splice(replyIdx+2,0,{
+        user:replyUsers[1],text:'回复 @'+replyUsers[0]+'：'+replyTexts[1],
+        likes:rand(0,99),replies:0,time:pick(['刚刚','刚刚']),isReply:true
+      });
+    }
   }
   return comments;
 }
@@ -1291,6 +1472,7 @@ function endDay(){
 
   // 检查任务进度
   checkQuests();
+  checkQuestFailures();
   
   const isNewStage=stage.id>1&&state.day===stage.days[0];
   if(isNewStage){
@@ -1332,7 +1514,7 @@ function generateStateMessages(){
     addMessage('media','📰',pick(SENDERS.media),pick(msgs),'媒体');
   }
 
-  // ===== 负面NPC消息（基于游戏状态）=----
+  // ===== 负面NPC消息（基于游戏状态） =====
   // 狗仔：曝光高时出现
   if(state.exposure>40&&Math.random()<0.15&&state.day>3&&!state.messages.some(m=>m.type==='paparazzi'&&!m.replied)){
     const msgs=NEGATIVE_MSGS.paparazzi;
@@ -1353,6 +1535,59 @@ function generateStateMessages(){
   }
 
   if(state.messages.length>40)state.messages=state.messages.slice(-40);
+  
+  // ===== 对家主动互动 =====
+  if(state.day>5&&Math.random()<0.12){
+    const r0=getRivalState(0,state.day);
+    const myScore=state.talent*0.2+state.popularity*0.3+Math.log10(Math.max(1,state.fans))*10+state.money*0.001;
+    const rScore=r0.talent*0.2+r0.popularity*0.3+Math.log10(Math.max(1,r0.fans))*10+r0.money*0.001;
+    if(myScore>rScore*1.1&&!state.messages.some(m=>m.type==='rival'&&m.text.includes('恭喜'))){
+      addMessage('rival','💀',pick(SENDERS.rival),'哼……这次算你厉害，下次不会让你赢了😤','竞争');
+    }else if(myScore<rScore*0.9&&!state.messages.some(m=>m.type==='rival'&&m.text.includes('也就'))){
+      addMessage('rival','💀',pick(SENDERS.rival),'就这？看来我之前高估你了😏','嘲讽');
+    }
+  }
+}
+
+// ===== 任务失败后果 =====
+function checkQuestFailures(){
+  if(!state||!state.quests)return;
+  const stage=getStage(state.day);
+  const mainQs=MAIN_QUESTS[stage.id]||[];
+  const daysLeft=stage.days[1]-state.day;
+  mainQs.forEach(q=>{
+    if(state.quests[q.id]==='pending'&&daysLeft<=3&&daysLeft>=0){
+      if(!state.questFailWarned)state.questFailWarned={};
+      if(!state.questFailWarned[q.id]){
+        state.questFailWarned[q.id]=true;
+        const warns={
+          'q1_1':'才艺考核快到了，你还不去训练？！😠',
+          'q1_2':'第10天就要考核了，才艺还差得远！⏰',
+          'q2_1':'选秀在即，人气还不够啊！快去参加活动！',
+          'q2_2':'粉丝数还差一些才能出道，加油营业！💪',
+          'q3_1':'钱快花完了！快接工作赚钱！！💰',
+          'q3_2':'情商太低了，多去社交学学人情世故！',
+          'q4_1':'顶流之路不好走，保持曝光但别太过火！',
+          'q4_2':'最后阶段了，注意控制形象！'
+        };
+        addMessage('agent','👩‍💼','经纪人杨姐',warns[q.id]||'任务要抓紧了！','紧急');
+        showToast('⏰ 经纪人发来紧急提醒！');
+        soundBad();
+      }
+    }
+  });
+  if(state.day===stage.days[1]){
+    mainQs.forEach(q=>{
+      if(state.quests[q.id]==='pending'){
+        const penalties={talent:-3,popularity:-5,eq:-2};
+        Object.entries(penalties).forEach(([k,v])=>{
+          if(Math.random()<0.5)changeStat(k,v,false);
+        });
+        addLog(`⚠️ 未完成「${q.name}」：能力有所退步`,'gossip');
+        showToast(`⚠️ 未完成任务「${q.name}」受到惩罚`);
+      }
+    });
+  }
 }
 
 /* ================================================================
@@ -1547,7 +1782,10 @@ function renderTrending(){
       if(!t)return;
       const con=document.getElementById('modal-container');
       con.className='modal-overlay';
-      con.innerHTML=`<div class="modal"><h2>🔥 热搜详情</h2><div class="modal-sub">${t.title}</div><div style="max-height:45vh;overflow-y:auto">${(t.comments||[{user:'娱乐速递',text:'暂无评论',likes:0}]).map(c=>`<div style="padding:6px 0;border-bottom:1px solid #f0e0e8;font-size:13px"><div style="font-weight:600;color:#2d1a2e">${c.user}</div><div style="color:#555;margin:2px 0">${c.text}</div><div style="font-size:10px;color:#999">👍 ${c.likes>=1000?(c.likes/1000).toFixed(1)+'k':c.likes} · ${c.time||'刚刚'}</div></div>`).join('')}</div><button class="btn btn-pink close-btn" id="td-close">关闭</button></div>`;
+      con.innerHTML=`<div class="modal"><h2>🔥 热搜详情</h2><div class="modal-sub">${t.title}</div><div style="max-height:45vh;overflow-y:auto">${(t.comments||[{user:'娱乐速递',text:'暂无评论',likes:0}]).map(c=>{
+        const indent=c.isReply?'margin-left:24px;padding-left:10px;border-left:2px solid #e0e0e0':'';
+        return `<div style="padding:6px 0;border-bottom:1px solid #f5e8f0;font-size:13px;${indent}"><div style="font-weight:600;color:#2d1a2e;font-size:12px">${c.user}</div><div style="color:#555;margin:2px 0;line-height:1.5">${c.text}</div><div style="font-size:10px;color:#bbb">👍 ${c.likes>=1000?(c.likes/1000).toFixed(1)+'k':c.likes}${c.replies>0?' 💬 '+c.replies:''} · ${c.time||'刚刚'}</div></div>`;
+      }).join('')}</div><button class="btn btn-pink close-btn" id="td-close">关闭</button></div>`;
       con.querySelector('#td-close').addEventListener('click',()=>con.classList.add('hidden'));
       soundClick();
     });
@@ -1980,6 +2218,12 @@ function renderAll(){
   renderAvatar();
   document.getElementById('fans-display').textContent=formatNum(state.fans);
   renderExposure();renderGoalBar();
+  // 消息未读红点
+  const badge=document.getElementById('msg-badge');
+  const unread=(state.messages||[]).filter(m=>!m.read).length;
+  if(badge){
+    if(unread>0){badge.classList.remove('hidden')}else{badge.classList.add('hidden')}
+  }
   const active=document.querySelector('.page.active');
   if(active){
     const id=active.id.replace('page-','');
