@@ -110,6 +110,12 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
 .chat-bubble.na{background:#f0e6ff}
 .chat-bubble .r-opt{display:block;background:rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;margin-top:4px;cursor:pointer;font-size:12px;transition:background .2s}
 .chat-bubble .r-opt:active{background:rgba(255,255,255,0.35)}
+/* 回复大卡片样式 */
+.r-opt-card{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border-radius:12px;padding:10px 12px;margin-bottom:6px;cursor:pointer;border:2px solid #a5d6a7;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.r-opt-card:active{transform:scale(0.97);box-shadow:0 1px 4px rgba(0,0,0,0.1)}
+.r-opt-card .r-title{font-size:14px;font-weight:600;color:#333}
+.r-opt-card .r-effects{font-size:11px;margin-top:4px;color:#666}
+.r-opt-card .r-preview{font-size:10px;margin-top:2px;color:#999}
 @keyframes bubbleIn{0%{opacity:0;transform:scale(0.95)}100%{opacity:1;transform:scale(1)}}
 
 /* ===== 日程页 ===== */
@@ -269,6 +275,14 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
       <div class="card">
         <div class="card-header"><span class="page-title" style="margin:0">🔥 热搜</span><span style="font-size:11px;color:#999" id="hot-count">实时</span></div>
         <div id="trending-list"></div>
+      </div>
+      <div class="card" id="quest-card">
+        <div class="card-header"><span class="page-title" style="margin:0;font-size:14px">🎯 主线任务</span><span id="quest-progress" style="font-size:11px;color:#999"></span></div>
+        <div id="quest-list" style="font-size:12px"></div>
+      </div>
+      <div class="card" id="rival-card">
+        <div class="card-header"><span class="page-title" style="margin:0;font-size:14px">⚔️ 对家动态</span><span style="font-size:11px;color:#999">竞争排行</span></div>
+        <div id="rival-list" style="font-size:12px"></div>
       </div>
       <div class="card">
         <div class="card-header"><span class="page-title" style="margin:0">📌 动态</span><span style="font-size:11px;color:#999">最近</span></div>
@@ -511,6 +525,67 @@ function getDailyVibeTip(){
 // 生活费（每天自动扣除）
 const DAILY_COST=200;
 
+// ===== 主线剧情任务 =====
+const MAIN_QUESTS={
+  1:[
+    {id:'q1_1',name:'初入公司',desc:'完成第一次训练',done:g=>g.actionCount?.train>0,reward:{talent:3,money:200},msg:'公司的前辈说你很有潜力！'},
+    {id:'q1_2',name:'才艺达标',desc:'才艺达到50以上',done:g=>g.talent>=50,reward:{fans:500},msg:'你通过了练习生考核！'}
+  ],
+  2:[
+    {id:'q2_1',name:'初登舞台',desc:'选秀第一次亮相，人气达到30',done:g=>g.popularity>=30,reward:{fans:1000},msg:'你的初舞台惊艳了全场！'},
+    {id:'q2_2',name:'收获粉丝',desc:'粉丝数突破5000',done:g=>g.fans>=5000,reward:{money:1000},msg:'开始有粉丝后援会了！'}
+  ],
+  3:[
+    {id:'q3_1',name:'第一桶金',desc:'存款达到5000',done:g=>g.money>=5000,reward:{popularity:10},msg:'你接到了人生第一个大代言！'},
+    {id:'q3_2',name:'站稳脚跟',desc:'情商达到50',done:g=>g.eq>=50,reward:{money:2000},msg:'你在圈内建立了人脉！'}
+  ],
+  4:[
+    {id:'q4_1',name:'顶流之路',desc:'人气达到70',done:g=>g.popularity>=70,reward:{fans:5000},msg:'你登上了顶流宝座！'},
+    {id:'q4_2',name:'完美收官',desc:'曝光控制在50以下进入最后10天',done:g=>g.exposure<50,reward:{fans:10000},msg:'你以完美形象走到了最后！'}
+  ]
+};
+
+// ===== 支线任务（NPC发布）=====
+const SIDE_QUESTS_POOL=[
+  {id:'sq_agent',name:'经纪人的嘱托',npc:'agent',desc:'连续训练2天',check:g=>(g.actionCount?.train||0)>=2&&g.quests?.sq_agent!=='done',reward:{eq:5,money:500}},
+  {id:'sq_fans',name:'粉丝见面会',npc:'fan',desc:'粉丝运营2次',check:g=>(g.actionCount?.fans||0)>=2&&g.quests?.sq_fans!=='done',reward:{popularity:8,fans:1000}},
+  {id:'sq_brand',name:'品牌合作',npc:'brand',desc:'成功接1次工作',check:g=>(g.actionCount?.work||0)>=1&&g.quests?.sq_brand!=='done',reward:{money:1500}},
+  {id:'sq_media',name:'媒体采访',npc:'media',desc:'社交互动1次',check:g=>(g.actionCount?.social||0)>=1&&g.quests?.sq_media!=='done',reward:{popularity:10}},
+  {id:'sq_rest',name:'劳逸结合',npc:'agent',desc:'休息3次',check:g=>(g.actionCount?.rest||0)>=3&&g.quests?.sq_rest!=='done',reward:{stamina:10}},
+  {id:'sq_lowkey',name:'低调一周',npc:'agent',desc:'低调行事2次',check:g=>(g.actionCount?.lowkey||0)>=2&&g.quests?.sq_lowkey!=='done',reward:{exposure:-10}},
+];
+
+// ===== 对家/竞争对手系统 =====
+const RIVALS=[
+  {name:'林诗涵',avatar:'👸',title:'国民初恋',stats:[
+    {day:1,talent:30,popularity:25,fans:800,money:800},
+    {day:10,talent:45,popularity:40,fans:3000,money:2000},
+    {day:20,talent:55,popularity:65,fans:15000,money:5000},
+    {day:30,talent:65,popularity:75,fans:50000,money:12000},
+    {day:40,talent:75,popularity:82,fans:200000,money:25000},
+    {day:50,talent:82,popularity:88,fans:500000,money:50000},
+    {day:60,talent:88,popularity:92,fans:2000000,money:100000}
+  ]},
+  {name:'顾晚晴',avatar:'🧝‍♀️',title:'天才创作',stats:[
+    {day:1,talent:35,popularity:20,fans:600,money:500},
+    {day:10,talent:55,popularity:30,fans:2000,money:1500},
+    {day:20,talent:75,popularity:45,fans:8000,money:3000},
+    {day:30,talent:85,popularity:55,fans:30000,money:8000},
+    {day:40,talent:90,popularity:65,fans:100000,money:15000},
+    {day:50,talent:92,popularity:72,fans:300000,money:30000},
+    {day:60,talent:95,popularity:78,fans:1000000,money:60000}
+  ]},
+  {name:'苏暖暖',avatar:'🦊',title:'氛围感女神',stats:[
+    {day:1,talent:20,popularity:30,fans:1000,money:1200},
+    {day:10,talent:28,popularity:50,fans:5000,money:3500},
+    {day:20,talent:35,popularity:70,fans:20000,money:8000},
+    {day:30,talent:42,popularity:82,fans:80000,money:20000},
+    {day:40,talent:50,popularity:88,fans:300000,money:50000},
+    {day:50,talent:55,popularity:92,fans:800000,money:100000},
+    {day:60,talent:60,popularity:95,fans:3000000,money:200000}
+  ]}
+];
+
 // NPC关系系统
 function initRelations(){
   return {agent:60,fans:50,brand:50};
@@ -532,6 +607,141 @@ function getFanMood(state){
   return ['脱粉潮出现了！！😱','超话里全是失望的声音','粉丝站关了好几个……'];
 }
 
+// ===== 主线/支线任务系统 =====
+function initQuests(){
+  const q={};
+  Object.values(MAIN_QUESTS).forEach(stage=>{
+    stage.forEach(sq=>{q[sq.id]='pending'});
+  });
+  SIDE_QUESTS_POOL.forEach(sq=>{q[sq.id]='pending'});
+  return q;
+}
+
+function checkQuests(){
+  if(!state||!state.quests)return;
+  const stage=getStage(state.day);
+  const mainQs=MAIN_QUESTS[stage.id]||[];
+  const news=[];
+  mainQs.forEach(q=>{
+    if(state.quests[q.id]==='pending'&&q.done(state)){
+      state.quests[q.id]='done';
+      news.push({name:q.name,reward:q.reward,msg:q.msg});
+    }
+  });
+  SIDE_QUESTS_POOL.forEach(q=>{
+    if(state.quests[q.id]==='pending'&&q.check(state)){
+      state.quests[q.id]='done';
+      news.push({name:q.name,reward:q.reward,msg:'支线完成！'});
+    }
+  });
+  news.forEach(n=>{
+    Object.entries(n.reward||{}).forEach(([k,v])=>changeStat(k,v,true));
+    if(n.msg)showToast('✅ '+n.msg);
+    addLog('🎯 任务完成：'+n.name+(n.msg?' → '+n.msg:''));
+    soundAch();
+  });
+}
+
+// ===== 对家系统 =====
+function getRivalState(rivalIdx,day){
+  const r=RIVALS[rivalIdx];
+  if(!r)return null;
+  let best=r.stats[0];
+  for(let i=1;i<r.stats.length;i++){
+    if(r.stats[i].day<=day)best=r.stats[i];
+    else break;
+  }
+  return {name:r.name,avatar:r.avatar,title:r.title,...best};
+}
+
+function getRivalRanking(){
+  if(!state)return [];
+  const rivals=[getRivalState(0,state.day),getRivalState(1,state.day),getRivalState(2,state.day)];
+  // Add player
+  const player={name:state.name,avatar:state.avatar,title:'你',talent:state.talent,popularity:state.popularity,fans:state.fans,money:state.money};
+  // Sort by composite score
+  const all=[player,...rivals.filter(Boolean)];
+  all.sort((a,b)=>{
+    const scoreA=a.talent*0.2+a.popularity*0.3+Math.log10(Math.max(1,a.fans))*10+a.money*0.001;
+    const scoreB=b.talent*0.2+b.popularity*0.3+Math.log10(Math.max(1,b.fans))*10+b.money*0.001;
+    return scoreB-scoreA;
+  });
+  return all;
+}
+
+// 对家对你的评价（基于对比）
+function getRivalComment(){
+  if(!state)return '';
+  const r0=getRivalState(0,state.day);
+  const r1=getRivalState(1,state.day);
+  const r2=getRivalState(2,state.day);
+  const myScore=state.talent*0.2+state.popularity*0.3+Math.log10(Math.max(1,state.fans))*10+state.money*0.001;
+  const comments=[];
+  [r0,r1,r2].forEach((r,i)=>{
+    if(!r)return;
+    const rScore=r.talent*0.2+r.popularity*0.3+Math.log10(Math.max(1,r.fans))*10+r.money*0.001;
+    if(myScore>rScore*1.2)comments.push(`${r.avatar}${r.name}：可恶……被她超了😤`);
+    else if(myScore<rScore*0.8)comments.push(`${r.avatar}${r.name}：不过如此嘛😏`);
+    else if(Math.abs(myScore-rScore)<rScore*0.1)comments.push(`${r.avatar}${r.name}：哼，走着瞧👀`);
+    else comments.push(`${r.avatar}${r.name}：还不错嘛😐`);
+  });
+  return pick(comments);
+}
+
+// 消息回复涟漪效果（回复后产生的连锁反应）
+function processReplyRipple(msgType,replyData){
+  if(!state)return;
+  const eff=replyData.eff||{};
+  const rel=replyData.rel||{};
+  
+  // 应用数值效果
+  Object.entries(eff).forEach(([k,v])=>{
+    if(k==='fans'&&v>-1&&v<1){
+      const a=Math.floor(state.fans*Math.abs(v));
+      changeStat('fans',v<0?-a:a,false);
+    }else changeStat(k,v,false);
+  });
+  
+  // 应用关系效果
+  if(!state.relations)state.relations=initRelations();
+  Object.entries(rel).forEach(([k,v])=>{
+    if(state.relations[k]!==undefined){
+      state.relations[k]=clamp(state.relations[k]+v,0,100);
+    }
+  });
+  
+  // 涟漪效应：你的选择会影响其他NPC
+  if(msgType==='agent'&&rel.agent&&rel.agent>0){
+    // 讨好了经纪人 → 她帮你推荐工作
+    addMessage('media','📰',pick(SENDERS.media),'杨姐推荐了你，我们想约个采访！','媒体');
+    showToast('📰 经纪人帮你推荐了媒体资源！');
+  }
+  if(msgType==='fan'&&rel.fans&&rel.fans>0){
+    // 讨好了粉丝 → 粉丝主动帮宣传
+    changeStat('popularity',3,false);
+    addMessage('fanclub','🌟',pick(SENDERS.fanclub),'粉丝们自发帮你打榜，数据涨了好多！','后援会');
+  }
+  if(msgType==='brand'&&rel.brand&&rel.brand>0){
+    // 品牌好感 → 更多合作
+    changeStat('money',300,false);
+    addMessage('brand','🏪',pick(SENDERS.brand),'我们还有个新项目想找你！','品牌');
+  }
+  if(msgType==='paparazzi'){
+    if(replyData.text.includes('报警')){
+      addMessage('fan','💌',pick(SENDERS.fan),'姐姐报警了！好帅！支持你💪','粉丝');
+      changeStat('popularity',8,false);
+    }else if(replyData.text.includes('花钱')){
+      state.relations.fans=Math.max(0,state.relations.fans-5);
+      addMessage('antifan','😈',pick(SENDERS.antifan),'听说你花钱消灾了？呵呵怂货🤮','黑粉');
+    }else if(replyData.text.includes('求')){
+      addMessage('rival','💀',pick(SENDERS.rival),'听说你被狗仔勒索了？真惨啊😏','对家');
+    }
+  }
+  if(replyData.msg)showToast('💬 '+replyData.msg);
+  if(replyData.eff&&Object.values(replyData.eff).some(v=>typeof v==='number'&&v<0))soundBad();
+  else soundGood();
+}
+
 function defaultState(name,avatar){
   return{
     name:name||'星光学员',avatar:avatar||'👩‍🎤',
@@ -541,8 +751,9 @@ function defaultState(name,avatar){
     messages:[],msgTab:'all',trending:[],eventHistory:[],
     actionCount:{},lastAction:null,stage1Passed:false,
     chatHistories:{},tutorialComplete:false,
-    relations:initRelations(), // NPC关系
-    crisisCooldown:0, // 危机冷却
+    relations:initRelations(),
+    quests:initQuests(),
+    crisisCooldown:0,
     exposureWarned:false, // 是否已警告过曝光
     moneyDebt:0 // 欠费天数
   };
@@ -1078,6 +1289,9 @@ function endDay(){
   // ===== 触发基于状态的消息 =====
   generateStateMessages();
 
+  // 检查任务进度
+  checkQuests();
+  
   const isNewStage=stage.id>1&&state.day===stage.days[0];
   if(isNewStage){
     showStageStory(stage,()=>{generateTrending();showReport()});
@@ -1273,6 +1487,48 @@ function renderQuickStats(){
   ].map(s=>`<div class="quick-stat"><div class="label">${s.l}</div><div class="value ${s.c}">${s.v}</div></div>`).join('');
 }
 
+function renderQuests(){
+  if(!state||!state.quests)return;
+  const stage=getStage(state.day);
+  const mainQs=MAIN_QUESTS[stage.id]||[];
+  const el=document.getElementById('quest-list');
+  const prog=document.getElementById('quest-progress');
+  if(!el)return;
+  const done=mainQs.filter(q=>state.quests[q.id]==='done').length;
+  prog.textContent=`${done}/${mainQs.length}`;
+  if(mainQs.length===0){el.innerHTML='<div style="color:#ccc;padding:4px 0">✨ 享受你的顶流时光吧</div>';return}
+  el.innerHTML=mainQs.map(q=>{
+    const status=state.quests[q.id];
+    const icon=status==='done'?'✅':status==='active'?'🔄':'⏳';
+    return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #f5e8f0">
+      <span>${icon}</span><span style="flex:1">${q.desc}</span>
+      ${status==='done'?'<span style="color:#34d399;font-size:10px">已完成</span>':''}
+    </div>`;
+  }).join('');
+}
+
+function renderRivals(){
+  const el=document.getElementById('rival-list');
+  if(!el)return;
+  const ranking=getRivalRanking();
+  if(!ranking||ranking.length===0){el.innerHTML='<div style="color:#ccc;padding:4px 0">暂无数据</div>';return}
+  el.innerHTML=ranking.map((r,i)=>{
+    const isMe=r.title==='你';
+    const score=Math.round(r.talent*0.2+r.popularity*0.3+Math.log10(Math.max(1,r.fans))*10+r.money*0.001);
+    const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f5e8f0;${isMe?'background:#fce4ec;border-radius:6px;margin:0 -6px;padding:5px 6px':''}">
+      <span style="font-size:14px">${medals[i]||'•'}</span>
+      <span>${r.avatar||'👤'}</span>
+      <span style="flex:1;font-weight:${isMe?'700':'400'};color:${isMe?'#e8437a':'#333'}">${isMe?'⭐ '+r.name:r.name}</span>
+      <span style="font-size:11px;color:#999">🔥${r.popularity} 🎵${r.talent}</span>
+      <span style="font-size:10px;color:#bbb">${formatNum(r.fans)}</span>
+    </div>`;
+  }).join('');
+  // Add rival comment at bottom
+  const comment=getRivalComment();
+  if(comment)el.innerHTML+=`<div style="font-size:11px;color:#999;margin-top:6px;font-style:italic">💬 ${comment}</div>`;
+}
+
 function renderTrending(){
   const el=document.getElementById('trending-list');
   if(!state.trending||state.trending.length===0){el.innerHTML='<div style="color:#999;font-size:12px;padding:8px 0">暂无热搜</div>';return}
@@ -1449,11 +1705,27 @@ function showChatWindow(type){
   const lastMsg=msgs.length>0?msgs[msgs.length-1]:null;
   const canReply=lastMsg&&!lastMsg.replied;
 
-  // 回复选项（基于NPC类型，回复会影响关系）
+  // 回复选项大卡片UI（显示效果预览）
   let replyOpts='';
   if(canReply){
     const replies=getReplyOptions(type,lastMsg);
-    replyOpts=replies.map(r=>`<div class="r-opt" data-reply='${JSON.stringify(r).replace(/'/g,"&#39;")}'>${r.text}</div>`).join('');
+    replyOpts=replies.map(r=>{
+      const effText=[];
+      if(r.eff)Object.entries(r.eff).forEach(([k,v])=>{
+        if(k==='fans'&&v>-1&&v<1){const p=Math.round(Math.abs(v)*100);effText.push(`${v<0?'-':'+'}${p}%粉丝`)}
+        else if(v!==0){const lb={popularity:'🔥人气',money:'💰',exposure:'📸',talent:'🎵',eq:'💬',fans:'👥'}[k]||k;effText.push(`${v>0?'+':''}${v}${lb}`)}
+      });
+      if(r.rel)Object.entries(r.rel).forEach(([k,v])=>{
+        if(v!==0){const lb={agent:'👩‍💼',fans:'💕',brand:'🏪'}[k]||k;effText.push(`${v>0?'❤️':'💔'}${k}${v>0?'+':''}${v}`)}
+      });
+      const effStr=effText.length>0?effText.join(' '):'';
+      const isGood=!effText.some(t=>t.includes('-')||t.includes('💔'));
+      return `<div class="r-opt" data-reply='${JSON.stringify(r).replace(/'/g,"&#39;")}' style="background:${isGood?'linear-gradient(135deg,#e8f5e9,#c8e6c9)':'linear-gradient(135deg,#fef2f2,#ffcdd2)'};border-radius:12px;padding:10px 12px;margin-bottom:6px;cursor:pointer;border:2px solid ${isGood?'#a5d6a7':'#ef9a9a'};transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+        <div style="font-size:14px;font-weight:600;color:#333">${r.text}</div>
+        ${effStr?`<div style="font-size:11px;margin-top:4px;color:#666">${effStr}</div>`:''}
+        ${r.msg?`<div style="font-size:10px;margin-top:2px;color:#999">💬 ${r.msg}</div>`:''}
+      </div>`;
+    }).join('');
   }
 
   const headerColor=isNegative?'#fef2f2':meta.color;
@@ -1484,23 +1756,12 @@ function showChatWindow(type){
   con.querySelectorAll('.r-opt').forEach(opt=>{
     opt.addEventListener('click',function(){
       const replyData=JSON.parse(this.dataset.reply);
-      // 应用回复效果
-      const eff=replyData.eff||{};
-      for(const[k,v]of Object.entries(eff)){
-        if(k==='fans'&&v>-1&&v<1){const a=Math.floor(state.fans*Math.abs(v));changeStat('fans',v<0?-a:a,false)}
-        else changeStat(k,v,false);
-      }
-      // 关系影响
-      const rel=replyData.rel||{};
-      if(!state.relations)state.relations=initRelations();
-      for(const[k,v]of Object.entries(rel)){
-        if(state.relations[k]!==undefined)state.relations[k]=clamp(state.relations[k]+v,0,100);
-      }
+      // 应用回复涟漪效果
+      processReplyRipple(type,replyData);
       // 标记已回复
       if(lastMsg){lastMsg.replied=true;if(!lastMsg.replies)lastMsg.replies=[];lastMsg.replies.push({text:replyData.text,time:'刚刚',self:true})}
       addLog(`💬 回复${meta.name}：${replyData.text}`);
-      if(replyData.msg)showToast(replyData.msg);
-      if(replyData.eff&&Object.values(replyData.eff).some(v=>v<0))soundBad();else soundGood();
+      soundClick();
       showChatWindow(type);
       renderAll();saveGame();
     });
@@ -1722,7 +1983,7 @@ function renderAll(){
   const active=document.querySelector('.page.active');
   if(active){
     const id=active.id.replace('page-','');
-    if(id==='home'){renderQuickStats();renderTrending();renderRecentLog()}
+    if(id==='home'){renderQuickStats();renderTrending();renderRecentLog();renderQuests();renderRivals()}
     else if(id==='msg')renderMessages();
     else if(id==='schedule')renderSchedule();
     else if(id==='profile')renderProfile();
