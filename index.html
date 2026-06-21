@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>星光之路 · 爱豆模拟器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:#1a1a2e;color:#333;overflow-x:hidden;min-height:100vh;background:linear-gradient(180deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%)}
+:root{--pink:#ff6b9d;--dark-pink:#e8437a;--purple:#a855f7;--gold:#fbbf24;--blue:#60a5fa;--green:#34d399;--card:rgba(255,255,255,0.95);--radius:16px;--shadow:0 8px 32px rgba(0,0,0,0.12);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px)}
+.hidden{display:none!important}
+
+/* ===== 开场 ===== */
+#intro-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 0%,#1e2a5a,#0a0a1a)}
+.intro-card{background:rgba(255,255,255,0.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:36px 28px;max-width:380px;width:100%;text-align:center;color:#fff}
+.intro-card h1{font-size:34px;background:linear-gradient(135deg,#ff6b9d,#a855f7,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.intro-card .subtitle{color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:24px}
+.intro-card label{display:block;text-align:left;font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:4px}
+.intro-card input[type=text]{width:100%;padding:12px 16px;border:2px solid rgba(255,255,255,0.15);border-radius:12px;font-size:16px;outline:none;background:rgba(255,255,255,0.08);color:#fff;margin-bottom:14px;transition:border .3s}
+.intro-card input[type=text]:focus{border-color:var(--pink)}
+.intro-card input[type=text]::placeholder{color:rgba(255,255,255,0.3)}
+.avatar-select{display:flex;gap:10px;justify-content:center;margin:10px 0 20px;flex-wrap:wrap}
+.avatar-select .av-opt{font-size:36px;cursor:pointer;padding:6px;border-radius:50%;border:2px solid transparent;transition:all .3s;line-height:1;width:50px;height:50px;display:flex;align-items:center;justify-content:center}
+.avatar-select .av-opt.selected{border-color:var(--pink);background:rgba(255,107,157,0.2);transform:scale(1.1)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 24px;border:none;border-radius:40px;font-size:15px;font-weight:600;cursor:pointer;transition:all .25s;color:#fff;min-height:44px;position:relative;overflow:hidden;touch-action:manipulation}
+.btn:active{transform:scale(0.96)}
+.btn-pink{background:linear-gradient(135deg,#ff6b9d,#e8437a)}
+.btn-purple{background:linear-gradient(135deg,#a855f7,#7c3aed)}
+.btn-gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#5d3a2a}
+.btn-blue{background:linear-gradient(135deg,#60a5fa,#2563eb)}
+.btn-green{background:linear-gradient(135deg,#34d399,#10b981)}
+.btn-soft{background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15)}
+.intro-card .start-btn{width:100%;padding:14px;font-size:17px;margin-top:6px;background:linear-gradient(135deg,#ff6b9d,#a855f7);box-shadow:0 4px 20px rgba(255,107,157,0.3)}
+.intro-card label[style*="dashed"]:hover{border-color:var(--pink)!important;color:var(--pink)!important}
+
+/* ===== 手机外壳 ===== */
+#phone-frame{max-width:420px;margin:0 auto;min-height:100vh;background:linear-gradient(180deg,#f8f9fe,#f0e6ff);position:relative;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(0,0,0,0.3);overflow:hidden}
+
+/* ===== 顶部状态 ===== */
+.phone-status{display:flex;justify-content:space-between;align-items:center;padding:8px 14px 4px;font-size:12px;color:#7b4a5e;font-weight:600;background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(0,0,0,0.04)}
+.phone-status .day-badge{background:linear-gradient(135deg,#ff6b9d,#a855f7);color:#fff;padding:2px 12px;border-radius:20px;font-size:10px;margin-left:4px}
+.phone-status .fans-badge{font-size:12px;color:#e8437a}
+.phone-status .avatar-small{font-size:22px;cursor:pointer;transition:transform .3s;background:none;border:none;padding:0}
+.phone-status .avatar-small:active{transform:scale(0.9)}
+.phone-status .notif-dot{width:8px;height:8px;background:#f43f5e;border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ===== 曝光条 ===== */
+.exposure-row{display:flex;align-items:center;gap:6px;padding:3px 14px;background:rgba(255,255,255,0.5);backdrop-filter:blur(8px);font-size:10px;color:#666;border-bottom:1px solid rgba(0,0,0,0.04)}
+.exposure-row .bar-track{flex:1;height:5px;background:#f0e0e8;border-radius:10px;overflow:hidden}
+.exposure-row .bar-fill{height:100%;border-radius:10px;transition:width .5s ease;background:linear-gradient(90deg,#34d399,#fbbf24,#f43f5e)}
+
+/* ===== 目标栏 ===== */
+.goal-bar{display:flex;align-items:center;gap:6px;padding:4px 14px;background:rgba(255,255,255,0.55);backdrop-filter:blur(8px);font-size:11px;color:#7b4a5e;border-bottom:1px solid rgba(0,0,0,0.04)}
+.goal-bar .goal-text{flex:1;font-weight:500}
+.goal-bar .goal-progress{font-weight:700;color:var(--dark-pink)}
+
+/* ===== 主内容 ===== */
+#main-content{flex:1;overflow-y:auto;padding:10px 12px 70px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+#main-content::-webkit-scrollbar{width:3px}
+#main-content::-webkit-scrollbar-thumb{background:var(--pink);border-radius:10px}
+
+/* ===== 页面通用 ===== */
+.page{display:none;animation:fadeUp .3s ease}
+.page.active{display:block}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+.page-title{font-size:17px;font-weight:700;color:#2d1a2e;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+
+/* ===== 首页 ===== */
+.quick-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.quick-stat{text-align:center;padding:10px 4px;border-radius:12px;background:linear-gradient(135deg,#fce4ec,#f3e5f5)}
+.quick-stat .label{font-size:10px;color:#999}
+.quick-stat .value{font-size:17px;font-weight:700;color:#2d1a2e;margin-top:2px}
+.quick-stat .value.gold{color:#f59e0b}
+
+.trending-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #f5e8f0;cursor:pointer;transition:background .2s}
+.trending-item:last-child{border-bottom:none}
+.trending-item:active{background:#faf0f5;border-radius:8px;margin:0 -8px;padding:8px}
+.trending-item .rank{font-weight:800;font-size:13px;width:22px;min-width:22px;text-align:center;color:#999;padding-top:2px}
+.trending-item .rank.top3{color:var(--pink)}
+.trending-item .content{flex:1;min-width:0}
+.trending-item .content .title{font-size:13px;font-weight:600;color:#333;display:flex;align-items:center;gap:4px}
+.trending-item .content .meta{font-size:10px;color:#bbb;margin-top:3px;display:flex;gap:8px}
+.trending-item .hot-badge{font-size:9px;background:linear-gradient(135deg,#f43f5e,#e8437a);color:#fff;padding:1px 6px;border-radius:4px;font-weight:600}
+
+/* ===== 消息页 ===== */
+.msg-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f5e8f0;cursor:pointer;transition:background .2s;border-radius:8px}
+.msg-item:active{background:#faf0f5;padding:10px 8px;margin:0 -8px}
+.msg-item .avatar{font-size:30px;flex-shrink:0;width:36px;text-align:center}
+.msg-item .body{flex:1;min-width:0}
+.msg-item .body .sender{font-size:13px;font-weight:600;color:#2d1a2e}
+.msg-item .body .sender .tag{font-size:9px;background:#f0e6ff;color:#7c3aed;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:400}
+.msg-item .body .preview{font-size:12px;color:#999;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-item .body .time{font-size:10px;color:#ccc;margin-top:2px}
+.msg-item .badge-dot{width:8px;height:8px;background:var(--pink);border-radius:50%;flex-shrink:0;margin-top:6px}
+.msg-type-tab{display:flex;gap:2px;margin-bottom:8px;overflow-x:auto;padding:2px 0}
+.msg-type-tab::-webkit-scrollbar{height:0}
+.msg-tab-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:none;font-size:12px;cursor:pointer;background:#f0e0e8;color:#999;font-weight:500;transition:all .2s}
+.msg-tab-btn.active{background:var(--pink);color:#fff}
+.msg-tab-btn:active{transform:scale(0.95)}
+
+/* ===== 聊天/回复模态 ===== */
+.chat-modal .chat-area{max-height:55vh;overflow-y:auto;padding:4px 0;display:flex;flex-direction:column;gap:6px}
+.chat-modal .chat-area::-webkit-scrollbar{width:3px}
+.chat-modal .chat-area::-webkit-scrollbar-thumb{background:var(--pink);border-radius:10px}
+.chat-bubble{background:#f0e6ff;border-radius:12px 12px 12px 4px;padding:10px 14px;font-size:13px;line-height:1.6;max-width:88%;color:#333;align-self:flex-start;animation:bubbleIn .3s ease}
+.chat-bubble.self{background:var(--pink);color:#fff;border-radius:12px 12px 4px 12px;align-self:flex-end}
+.chat-bubble.self .r-opt{display:block;background:rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;margin-top:4px;cursor:pointer;font-size:12px;transition:background .2s}
+.chat-bubble.self .r-opt:active{background:rgba(255,255,255,0.35)}
+@keyframes bubbleIn{0%{opacity:0;transform:scale(0.95)}100%{opacity:1;transform:scale(1)}}
+
+/* ===== 日程页 ===== */
+.today-card{background:linear-gradient(135deg,#fce4ec,#f3e5f5,#e8f0fe);border-radius:14px;padding:14px;margin-bottom:10px;text-align:center}
+.today-card .day-big{font-size:18px;font-weight:700;color:#2d1a2e}
+.today-card .stage-name{font-size:12px;color:#666;margin-top:2px}
+.today-card .today-tip{font-size:12px;color:#7b4a5e;margin-top:6px;background:rgba(255,255,255,0.5);border-radius:8px;padding:6px 10px;line-height:1.5}
+.sched-btn{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px 12px;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);border:2px solid transparent;margin-bottom:6px}
+.sched-btn:active{transform:scale(0.98);border-color:var(--pink)}
+.sched-btn .s-icon{font-size:24px;width:34px;text-align:center}
+.sched-btn .s-info{flex:1;min-width:0}
+.sched-btn .s-info .s-name{font-size:13px;font-weight:600;color:#2d1a2e}
+.sched-btn .s-info .s-desc{font-size:10px;color:#999}
+.sched-btn .s-effects{text-align:right;font-size:9px;color:#666;line-height:1.3;white-space:nowrap}
+.sched-btn.disabled{opacity:0.35;pointer-events:none}
+
+/* ===== 档案页 ===== */
+#radar-canvas{display:block;margin:0 auto;width:100%;max-width:190px;height:auto}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
+.profile-stat{background:linear-gradient(135deg,#fce4ec,#fff);border-radius:10px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center}
+.profile-stat .s-label{font-size:11px;color:#666}
+.profile-stat .s-val{font-size:15px;font-weight:700;color:#2d1a2e}
+.profile-stat .s-val.pink{color:var(--dark-pink)}
+.achieve-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}
+.ach-item{text-align:center;padding:6px 2px;border-radius:8px;background:#f5e8f0;font-size:10px;transition:all .3s}
+.ach-item.locked{opacity:0.25;filter:grayscale(1)}
+.ach-item .ach-icon{font-size:20px;display:block}
+.ach-item .ach-name{font-size:8px;color:#7b4a5e;word-break:keep-all}
+
+/* ===== 更多页 ===== */
+.more-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border-radius:12px;cursor:pointer;transition:all .2s;margin-bottom:6px}
+.more-item:active{transform:scale(0.98);background:#f5e8f0}
+
+/* ===== 底部导航 ===== */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:420px;width:100%;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);display:flex;justify-content:space-around;padding:5px 0 calc(5px + var(--safe-bottom));border-top:1px solid rgba(0,0,0,0.06);z-index:30}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 10px;border:none;background:none;cursor:pointer;transition:all .2s;font-size:9px;color:#999;min-width:48px;touch-action:manipulation}
+.nav-item .nav-icon{font-size:20px;transition:transform .2s}
+.nav-item.active{color:var(--dark-pink)}
+.nav-item.active .nav-icon{transform:scale(1.1)}
+.nav-item:active .nav-icon{transform:scale(0.9)}
+
+/* ===== 模态框 ===== */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);animation:fadeIn .2s ease}
+@keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
+.modal{background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.25);padding:24px 20px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{0%{transform:translateY(20px);opacity:0}100%{transform:translateY(0);opacity:1}}
+.modal h2{font-size:19px;margin-bottom:4px;text-align:center;color:#2d1a2e}
+.modal .modal-sub{text-align:center;font-size:12px;color:#999;margin-bottom:12px;line-height:1.4}
+.modal p.modal-text{font-size:14px;line-height:1.7;color:#555;margin-bottom:12px}
+.modal .modal-opt{width:100%;padding:10px 14px;font-size:13px;text-align:left;justify-content:flex-start;border-radius:12px;margin-bottom:5px}
+.modal .modal-opt:disabled{opacity:0.35;pointer-events:none}
+.modal .close-btn{display:block;margin:8px auto 0;min-width:100px}
+
+/* ===== 故事 ===== */
+.story-card{text-align:center;padding:16px}
+.story-card .s-emoji{font-size:52px;margin-bottom:8px}
+.story-card h2{font-size:20px}
+.story-card p{font-size:13px;color:#555;line-height:1.7;margin:6px 0}
+
+/* ===== 结局 ===== */
+#ending-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 30%,#1e2a5a,#0a0a1a)}
+.end-card{background:rgba(255,255,255,0.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:32px 22px;max-width:400px;width:100%;text-align:center;color:#fff}
+.end-card .end-icon{font-size:56px;margin-bottom:6px}
+.end-card .end-rank{font-size:40px;margin:6px 0}
+.end-card h2{font-size:26px;color:#fff}
+.end-card p{font-size:14px;line-height:1.8;color:rgba(255,255,255,0.7);margin:10px 0}
+.end-card .end-stats{text-align:left;margin:10px 0;font-size:12px}
+.end-card .end-stats .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.7)}
+.end-card .restart-btn{margin-top:12px;width:100%;padding:14px}
+
+/* ===== 浮动文字 ===== */
+.float-text{position:fixed;pointer-events:none;font-weight:700;font-size:19px;z-index:999;animation:floatUp 1.5s ease-out forwards}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(0.5)}}
+
+/* ===== 成就 ===== */
+.ach-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;background:linear-gradient(135deg,#fff9c4,#fff3e0);border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,0.25);padding:28px 22px;text-align:center;max-width:280px;width:90%;animation:achPop .5s ease-out}
+@keyframes achPop{0%{transform:translate(-50%,-50%) scale(0)}60%{transform:translate(-50%,-50%) scale(1.08)}100%{transform:translate(-50%,-50%) scale(1)}}
+.ach-popup .icon{font-size:40px}
+.ach-popup h3{font-size:17px;color:#e65100}
+.ach-popup p{font-size:12px;color:#795548;margin:4px 0}
+
+.star-burst{position:fixed;pointer-events:none;z-index:150;top:0;left:0;right:0;bottom:0}
+.star{position:absolute;font-size:20px;animation:starFly 1.2s ease-out forwards}
+@keyframes starFly{0%{opacity:1;transform:translate(0,0) scale(0) rotate(0deg)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1.3) rotate(360deg)}}
+
+.fan-cel{position:fixed;top:0;left:0;right:0;bottom:0;z-index:150;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.fan-cel .text{font-size:40px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f43f5e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fanPop 2s ease-out forwards}
+@keyframes fanPop{0%{transform:scale(0)}30%{transform:scale(1.25)}100%{transform:scale(1);opacity:0}}
+
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;z-index:300;animation:toastIn .3s ease-out;backdrop-filter:blur(8px);max-width:80%;text-align:center;pointer-events:none}
+@keyframes toastIn{0%{transform:translateX(-50%) translateY(-30px);opacity:0}100%{transform:translateX(-50%) translateY(0);opacity:1}}
+
+@media(min-width:421px){#phone-frame{border-radius:28px;margin:12px auto;min-height:calc(100vh - 24px)}.bottom-nav{border-radius:0 0 28px 28px}}
+</style>
+</head>
+<body>
+
+<!-- ===== 开场 ===== -->
+<div id="intro-screen">
+  <div class="intro-card">
+    <h1>✨星光之路✨</h1>
+    <p class="subtitle">创造属于你的偶像传奇 💖</p>
+    <label>🌟 艺名</label>
+    <input type="text" id="player-name" value="星光学员" maxlength="10">
+    <label>👩 选择头像 <span style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:400">（点击预设或上传照片）</span></label>
+    <div class="avatar-select" id="avatar-select">
+      <span class="av-opt selected" data-av="👩‍🎤">👩‍🎤</span>
+      <span class="av-opt" data-av="👸">👸</span>
+      <span class="av-opt" data-av="🧝‍♀️">🧝‍♀️</span>
+      <span class="av-opt" data-av="🦊">🦊</span>
+      <span class="av-opt" data-av="🌸">🌸</span>
+      <span class="av-opt" data-av="💃">💃</span>
+    </div>
+    <div style="margin:8px 0 16px">
+      <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:2px dashed rgba(255,255,255,0.2);border-radius:12px;cursor:pointer;font-size:12px;color:rgba(255,255,255,0.6);transition:all .3s">
+        📁 上传自己的照片
+        <input type="file" id="avatar-upload" accept="image/*" style="display:none">
+      </label>
+      <div id="custom-avatar-preview" style="margin-top:8px;display:none">
+        <img id="custom-avatar-img" style="width:56px;height:56px;border-radius:50%;border:3px solid var(--pink);object-fit:cover">
+        <span style="font-size:11px;color:rgba(255,255,255,0.4);display:block;margin-top:4px">✅ 已上传，点击开始游戏</span>
+      </div>
+    </div>
+    <button class="btn start-btn" id="start-game-btn">🚀 开启偶像之旅</button>
+    <p style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:12px">💾 自动存档 · 随时继续</p>
+  </div>
+</div>
+
+<!-- ===== 手机 ===== -->
+<div id="phone-frame" class="hidden">
+  <!-- 状态栏 -->
+  <div class="phone-status">
+    <span>📅 第 <span id="day-num">1</span> 天 <span class="day-badge" id="stage-tag">🎯练习生</span></span>
+    <button class="avatar-small" id="avatar-btn"><span id="avatar-text">👩‍🎤</span><img id="avatar-img" class="hidden" style="width:26px;height:26px;border-radius:50%;object-fit:cover"></button>
+    <span class="fans-badge">👥 <span id="fans-display">100</span></span>
+  </div>
+
+  <!-- 曝光条 -->
+  <div class="exposure-row">
+    <span>📸</span>
+    <div class="bar-track"><div class="bar-fill" id="exposure-fill" style="width:5%"></div></div>
+    <span id="exposure-text">5%</span>
+  </div>
+
+  <!-- 目标条 -->
+  <div class="goal-bar hidden" id="goal-bar">
+    <span id="goal-icon">🎯</span>
+    <span class="goal-text" id="goal-text">提升才艺通过考核</span>
+    <span class="goal-progress" id="goal-progress">20/50</span>
+  </div>
+
+  <!-- 主内容 -->
+  <div id="main-content">
+    <!-- 首页 -->
+    <div class="page active" id="page-home">
+      <div class="quick-stats" id="quick-stats"></div>
+      <div class="card">
+        <div class="card-header"><span class="page-title" style="margin:0">🔥 热搜</span><span style="font-size:11px;color:#999" id="hot-count">实时</span></div>
+        <div id="trending-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="page-title" style="margin:0">📌 动态</span><span style="font-size:11px;color:#999">最近</span></div>
+        <div id="recent-log" style="font-size:12px;color:#666;line-height:1.6"></div>
+      </div>
+    </div>
+
+    <!-- 消息页 -->
+    <div class="page" id="page-msg">
+      <div class="page-title">💬 消息</div>
+      <div class="msg-type-tab" id="msg-tabs"></div>
+      <div id="msg-list"></div>
+    </div>
+
+    <!-- 日程页 -->
+    <div class="page" id="page-schedule">
+      <div class="today-card" id="today-card">
+        <div class="day-big">📅 第 <span id="sched-day">1</span> 天</div>
+        <div class="stage-name" id="sched-stage">🎯 练习生阶段</div>
+        <div class="today-tip" id="today-tip">💡 新的一天开始了！</div>
+      <div class="today-tip" id="side-event" style="margin-top:4px;background:rgba(255,255,255,0.3);font-size:11px;color:#999"></div>
+      </div>
+      <div class="page-title">🎯 今日行动 <span style="font-size:11px;color:#999;font-weight:400">（选1项）</span></div>
+      <div class="schedule-actions" id="sched-actions"></div>
+    </div>
+
+    <!-- 档案页 -->
+    <div class="page" id="page-profile">
+      <div class="card" style="text-align:center;padding:10px">
+        <canvas id="radar-canvas" width="200" height="170"></canvas>
+      </div>
+      <div class="card">
+        <div class="page-title" style="font-size:14px;margin:0">📊 属性</div>
+        <div class="profile-stats" id="profile-stats"></div>
+      </div>
+      <div class="card">
+        <div class="page-title" style="font-size:14px;margin:0">🏆 成就 <span id="ach-count" style="font-size:11px;color:#999;font-weight:400"></span></div>
+        <div class="achieve-grid" id="achieve-grid"></div>
+      </div>
+    </div>
+
+    <!-- 更多页 -->
+    <div class="page" id="page-more">
+      <div class="page-title">⚙️ 更多</div>
+      <div class="more-item" id="more-log">📋 完整日志</div>
+      <div class="more-item" id="more-save">💾 手动保存</div>
+      <div class="more-item" id="more-tutorial">📖 游戏指南</div>
+      <div class="more-item" id="more-restart">🔄 重新开始</div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <div class="bottom-nav" id="bottom-nav">
+    <button class="nav-item active" data-page="home"><span class="nav-icon">🏠</span>首页</button>
+    <button class="nav-item" data-page="msg"><span class="nav-icon">💬</span>消息</button>
+    <button class="nav-item" data-page="schedule"><span class="nav-icon">📋</span>日程</button>
+    <button class="nav-item" data-page="profile"><span class="nav-icon">👤</span>档案</button>
+    <button class="nav-item" data-page="more"><span class="nav-icon">⚙️</span>更多</button>
+  </div>
+</div>
+
+<div id="modal-container" class="hidden"></div>
+<div id="ending-screen" class="hidden"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================================================================
+   常量
+   ================================================================ */
+const STAGES=[
+  {id:1,name:'练习生',days:[1,10],emoji:'🎯',goal:'才艺达到50',goalCheck:g=>g.talent>=50,
+   tip:'公司要求第10天考核，才艺必须达到50以上！赶快去训练吧！',goalStat:'talent',goalTarget:50},
+  {id:2,name:'选秀出道',days:[11,20],emoji:'🎤',goal:'积累人气和粉丝',goalCheck:()=>true,
+   tip:'选秀期间多参加活动，人气和粉丝会快速增长！',goalStat:'popularity',goalTarget:40},
+  {id:3,name:'新人偶像',days:[21,40],emoji:'💫',goal:'拓展事业赚钱',goalCheck:()=>true,
+   tip:'现在开始接工作赚钱吧！注意平衡体力，别累倒了～',goalStat:'money',goalTarget:5000},
+  {id:4,name:'顶流巨星',days:[41,60],emoji:'👑',goal:'守住地位避免绯闻',goalCheck:()=>true,
+   tip:'人红是非多！控制曝光风险，别让绯闻毁掉事业！',goalStat:'popularity',goalTarget:80}
+];
+
+const ACTIONS=[
+  {id:'train',icon:'🎤',name:'训练才艺',desc:'体力-30',staminaCost:30,stat:'talent',min:5,max:12,risk:2,
+   msg:['今天跳舞进步超大！💃','高音完美征服老师！🎵','新舞步一遍就学会！✨','被夸是天才练习生！🌟']},
+  {id:'beauty',icon:'💄',name:'美容健身',desc:'💰-200 体力-20',moneyCost:200,staminaCost:20,stat:'beauty',min:3,max:8,risk:1,
+   msg:['皮肤好到发光！✨','健身效果绝了！💪','换了新发型超适合！💕','美容师都惊呆了！🌟']},
+  {id:'social',icon:'🤝',name:'社交互动',desc:'情商+2~6',eqMin:2,eqMax:6,risk:5,
+   msg:['认识了有趣的新朋友！💬','前辈给了超多干货！🤗','今天的局来值了！🎉']},
+  {id:'fans',icon:'📱',name:'粉丝运营',desc:'体力-20',staminaCost:20,popMin:5,popMax:15,risk:8,
+   msg:['直播人气爆棚！📱','新自拍被疯狂转发！📸','粉丝群消息99+！💬']},
+  {id:'work',icon:'💼',name:'接工作',desc:'体力-40',staminaCost:40,moneyMin:500,moneyMax:1500,popMin:2,popMax:8,risk:10,
+   msg:['广告拍摄一条过！🎬','导演疯狂夸你！📺','杂志出刊秒售罄！📰']},
+  {id:'rest',icon:'🛌',name:'休息',desc:'体力恢复',staminaMin:30,staminaMax:50,risk:-8,
+   msg:['睡到自然醒好幸福！😴','泡澡听歌太治愈了！🛁','做了个超美的梦！💭']},
+  {id:'lowkey',icon:'🎭',name:'低调行事',desc:'降曝光+恢复体力',staminaMin:15,staminaMax:25,risk:-15,
+   msg:['穿成路人出门没人认出！😎','在家追了一整天剧！📺','偷偷去逛了超市！🛒']}
+];
+
+const ACHIEVEMENTS=[
+  {id:'f1',name:'初露锋芒',icon:'⭐',check:g=>g.fans>=10000},
+  {id:'tm',name:'才艺大师',icon:'🎵',check:g=>g.talent>=90},
+  {id:'bq',name:'颜值天花板',icon:'💎',check:g=>g.beauty>=90},
+  {id:'sk',name:'铁人',icon:'💪',check:g=>g.totalTrainDays>=8},
+  {id:'sb',name:'社交达人',icon:'🦋',check:g=>g.eq>=80},
+  {id:'mf',name:'百万粉丝',icon:'🌟',check:g=>g.fans>=1000000},
+  {id:'ri',name:'小富婆',icon:'💰',check:g=>g.money>=20000},
+  {id:'pp',name:'人气王',icon:'🔥',check:g=>g.popularity>=85},
+  {id:'sv',name:'坚持60天',icon:'🏆',check:g=>g.day>=60},
+  {id:'qn',name:'顶流女王',icon:'👑',check:g=>g.fans>=5000000&&g.popularity>=90},
+  {id:'cl',name:'零绯闻',icon:'😇',check:g=>g.exposure<=10&&g.day>=30},
+  {id:'cb',name:'逆袭之星',icon:'✨',check:g=>g.talent>=60&&g.popularity>=50}
+];
+
+const FAN_MILESTONES=[
+  {count:1000,label:'粉丝破千🎉'},{count:10000,label:'粉丝破万🌟'},
+  {count:100000,label:'粉丝破十万💫'},{count:1000000,label:'粉丝破百万👑'},
+  {count:5000000,label:'粉丝破五百万💎'},{count:10000000,label:'粉丝破千万🚀'}
+];
+
+const ENDINGS=[
+  {id:'ss',rank:'SSS',name:'国际巨星',icon:'🌍',minFans:5000000,minTalent:90,minPopularity:90,
+   desc:'你从练习生一路成长为国际巨星！格莱美、奥斯卡、全球巡演——你站在了世界之巅。'},
+  {id:'ac',rank:'S',name:'实力影后',icon:'🎬',minFans:1000000,minTalent:75,minPopularity:70,
+   desc:'你用作品说话，成为公认的实力派演员。影后奖杯是最好的证明。'},
+  {id:'hp',rank:'A',name:'幸福隐退',icon:'💖',minEq:70,minFans:500000,
+   desc:'在巅峰时期急流勇退，你选择了爱情和平凡生活。偶尔分享日常，评论区全是祝福。'},
+  {id:'ct',rank:'B',name:'黑红路线',icon:'🔥',minPopularity:65,
+   desc:'争议和关注度始终相伴。有人爱有人骂，但你让所有人都记住了你的名字。'},
+  {id:'sc',rank:'C',name:'绯闻缠身',icon:'📸',minExposure:80,
+   desc:'狗仔镜头无处不在，私生活成了大众谈资。人们更关心你的八卦而非作品。'},
+  {id:'hb',rank:'D',name:'过气偶像',icon:'😢',always:true,
+   desc:'娱乐圈更新换代太快，你渐渐淡出了公众视野。但那段追梦的日子，永远闪闪发光。'}
+];
+
+// 热搜话题池
+const TRENDING_POOL=[
+  {cat:'ent',tpl:['{idol}新剧开机路透','{idol}机场私服曝光','年度最佳新人奖揭晓','当红女团回归预告','某顶流恋情疑似曝光','粉丝应援新高度','音乐榜单大洗牌','综艺节目创意大赛','娱乐圈年度收入榜','新晋导演作品口碑爆棚','明星街拍穿搭大赛','公益盛典明星阵容','短视频平台爆款舞蹈','粉丝投票最受欢迎爱豆']},
+];
+
+// 评论生成
+const COMMENT_USERS=['追星小仙女✨','吃瓜群众A','娱乐速递','草莓味的风🍓','月亮不睡我不睡🌙','每天都要开心鸭🦆','娱乐圈观察员','奶茶续命中🧋','今天也在追星🌟','吃瓜第一名🍉','追光者','星星点灯✨','娱乐小喇叭📢','甜甜圈本甜🍩','柠檬精本精🍋','路人甲','资深追星狗','瓜田里的猹','彩虹屁专营','理智粉代表'];
+const COMMENTS_EXCITED=['啊啊啊啊啊我死了！！😍','老公/老婆！！','这谁顶得住啊🆘','我的眼睛享福了👀','好美好帅好可爱！！','每日一遍净化心灵✨','路转粉了路转粉了！'];
+const COMMENTS_NEUTRAL=['有点意思🤔','期待期待！！','啥时候回归啊啊啊','支持！走花路吧🌸','这波操作666👏','不错不错继续加油','关注了关注了'];
+const COMMENTS_CRITICAL=['就这？？🤮','不是吧这也能吹','黑粉别来沾边','营销号滚啊','能不能专注作品','审美降级了属于是'];
+
+// 消息发送人池
+const SENDERS={
+  fan:['追星小粉丝💕','星星守护者🌟','你的小迷妹🌸','idol后援会','忠实听众🎵','从练习生就关注你'],
+  media:['娱乐周刊📰','时尚COSMO','星访谈节目组','娱乐星探','每日文娱'],
+  brand:['LUXURY美妆','XX服饰品牌方','潮牌SUPREME','饮品代言合作','珠宝品牌挚友'],
+  fanclub:['粉头小助理','后援会会长','粉丝管理组','应援站站长']
+};
+
+// 每日氛围/心情（让每一天都不一样）
+const DAILY_VIBES=[
+  {mood:'活力满满',emoji:'☀️',color:'#fff8e1',tip:'今天精力充沛，适合高强度训练💪',buff:'stamina',buffAmt:8},
+  {mood:'心情美丽',emoji:'🌸',color:'#fce4ec',tip:'今天人缘超好，社交会有意外收获🤝',buff:'eq',buffAmt:3},
+  {mood:'有点犯懒',emoji:'😴',color:'#e8eaf6',tip:'今天状态一般，休息回复效果加倍🛌',buff:'stamina',buffAmt:10},
+  {mood:'灵感爆发',emoji:'💡',color:'#e8f5e9',tip:'今天创意满格，创作类效果翻倍🎨',buff:'talent',buffAmt:3},
+  {mood:'好运连连',emoji:'🍀',color:'#e0f7fa',tip:'今天运气不错，大胆去做想做的事吧✨',buff:'luck',buffAmt:12},
+  {mood:'颜值爆表',emoji:'✨',color:'#f3e5f5',tip:'今天上镜效果满分，美容事半功倍💄',buff:'beauty',buffAmt:3},
+  {mood:'不想营业',emoji:'🌧️',color:'#e0e0e0',tip:'今天有点丧……但坚持会有回报💪',buff:'stamina',buffAmt:5},
+  {mood:'充满干劲',emoji:'🔥',color:'#fff3e0',tip:'今天像打了鸡血，工作效率超高⚡',buff:'popularity',buffAmt:3}
+];
+
+// 日常小插曲（纯氛围，无数值影响）
+const SIDE_EVENTS=[
+  '☀️ 今天天气超好，出门遇到了晒太阳的流浪猫～',
+  '🌧️ 下雨天窝在窗边听雨发呆，感觉很安宁……',
+  '🎵 路过音像店，里面竟然在放你的歌！',
+  '📸 路人拍到你的街拍发小红书，获赞无数！',
+  '🍜 今天吃到一家超好吃的拉面，幸福～',
+  '💤 闹钟没响差点睡过头！急匆匆赶到公司～',
+  '📱 刷到粉丝做的你的剪辑视频，看哭了😭',
+  '🎂 公司有同事过生日，蹭到了蛋糕！',
+  '🚕 打车遇到司机是你粉丝，死活不肯收钱！',
+  '🏪 便利店阿姨认出你，多送了一瓶水～',
+  '☕ 今天喝到一杯超好喝的燕麦拿铁！',
+  '💃 化妆时即兴跳了段舞，被自己美到！',
+  '📖 翻到以前的日记，那时候好青涩啊……',
+  '🎮 打游戏遇到大神带飞，连胜五把！',
+  '🌈 下班路上看到了彩虹，赶紧许了个愿～'
+];
+
+const DAILY_GOSSIP=[
+  '🔥 某顶流被曝和圈外人恋爱中……',
+  '🎬 X导演新片官宣，阵容好强！',
+  '📊 最新明星商业价值榜出炉！',
+  '🎤 某女团回归曲空降榜单第一！',
+  '👗 时装周明星造型盘点热议中',
+  '📱 某爱豆直播说错话，网友吵翻了',
+  '🏆 年度最受欢迎艺人投票开启了',
+  '💔 传了三年的一对CP宣布分手……',
+];
+
+/* ================================================================
+   状态
+   ================================================================ */
+const SAVE_KEY='idol_sim_v3';
+let state=null;
+
+// 每天生成不同的氛围/心情/花絮
+function generateDailyVibe(){
+  if(!state)return;
+  state.dailyVibe=pick(DAILY_VIBES);
+  state.dailySideEvent=pick(SIDE_EVENTS);
+  state.dailyGossip=pick(DAILY_GOSSIP);
+  state.dailyMiniBonus=Math.random()<0.2;
+}
+function getDailyVibeTip(){
+  if(!state||!state.dailyVibe)return '☀️ 新的一天，加油！';
+  return `${state.dailyVibe.emoji} ${state.dailyVibe.mood} · ${state.dailyVibe.tip}`;
+}
+
+function defaultState(name,avatar){
+  return{
+    name:name||'星光学员',avatar:avatar||'👩‍🎤',
+    day:1,beauty:40,talent:20,stamina:80,popularity:10,
+    fans:100,money:500,eq:30,luck:20,exposure:5,
+    log:[],achievements:[],totalTrainDays:0,fanMilestones:[],
+    messages:[],msgTab:'all',trending:[],eventHistory:[],
+    actionCount:{},lastAction:null,stage1Passed:false,
+    chatHistories:{},tutorialComplete:false
+  };
+}
+
+/* ================================================================
+   工具
+   ================================================================ */
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v))}
+function pick(arr){return arr[rand(0,arr.length-1)]}
+function formatNum(n){if(n>=10000)return (n/10000).toFixed(1)+'万';if(n>=1000)return (n/1000).toFixed(1)+'k';return String(n)}
+function getStage(day){for(const s of STAGES){if(day>=s.days[0]&&day<=s.days[1])return s}return STAGES[STAGES.length-1]}
+
+/* ================================================================
+   音效
+   ================================================================ */
+function playBeep(f,d){
+  try{const c=new(window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator();const g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f||800;g.gain.setValueAtTime(0.08,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+(d||0.12));o.start();o.stop(c.currentTime+(d||0.12))}catch(e){}
+}
+function soundGood(){playBeep(880,0.1);setTimeout(()=>playBeep(1100,0.12),100)}
+function soundBad(){playBeep(300,0.18)}
+function soundClick(){playBeep(660,0.05)}
+function soundAch(){playBeep(660,0.08);setTimeout(()=>playBeep(880,0.1),120);setTimeout(()=>playBeep(1100,0.12),240)}
+
+/* ================================================================
+   存档
+   ================================================================ */
+function saveGame(){if(!state)return;try{localStorage.setItem(SAVE_KEY,JSON.stringify(state))}catch(e){}}
+function loadGame(){try{const r=localStorage.getItem(SAVE_KEY);if(r){const d=JSON.parse(r);if(d&&typeof d.day==='number'&&d.day>=1&&d.day<=60){state=d;return true}}}catch(e){}return false}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}
+
+/* ================================================================
+   UI 工具
+   ================================================================ */
+function showFloat(x,y,text,color){
+  const el=document.createElement('div');el.className='float-text';
+  el.textContent=text;el.style.left=x+'px';el.style.top=y+'px';el.style.color=color||'#e8437a';
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1500)
+}
+let toastTimer=null;
+function showToast(msg){
+  const old=document.querySelector('.toast');if(old)old.remove();
+  const el=document.createElement('div');el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{if(el.parentNode)el.remove()},2000)
+}
+function addLog(msg,tp){
+  if(!state)return;state.log.push({msg,type:tp||'info',day:state.day});
+  if(state.log.length>50)state.log.shift();
+}
+
+// 数值变化
+function changeStat(name,delta,showF=true){
+  if(!state||delta===0)return delta;
+  const old=state[name];
+  if(name==='fans'){state[name]=Math.max(0,Math.floor(state[name]+delta))}
+  else if(name==='money'){state[name]=Math.max(0,state[name]+delta)}
+  else if(name==='exposure'){state[name]=clamp(state[name]+delta,0,100)}
+  else if(name==='stamina'){state[name]=clamp(state[name]+delta,0,100)}
+  else{state[name]=clamp(state[name]+delta,0,100)}
+  const ad=state[name]-old;
+  if(showF&&ad!==0){
+    const x=rand(40,window.innerWidth-100),y=rand(80,250);
+    const sign=ad>0?'+':'';const color=ad>0?'#34d399':'#f43f5e';
+    const lb={beauty:'颜值',talent:'才艺',stamina:'体力',popularity:'人气',fans:'粉丝',money:'金钱',eq:'情商',exposure:'曝光'};
+    showFloat(x,y,`${sign}${ad} ${lb[name]||name}`,color)
+  }
+  return ad;
+}
+
+/* ================================================================
+   消息系统
+   ================================================================ */
+// 生成各类消息
+function generateDailyMessages(){
+  if(!state)return;
+  const day=state.day;
+  if(!state.messages)state.messages=[];
+
+  // 经纪人消息
+  if(Math.random()<0.5||day===1){
+    const stage=getStage(day);
+    const agentPool={
+      1:['今天训练怎么样？加油！💪','下周考核准备好了吗？📋','公司对你的进步很满意！🌟'],
+      2:['选秀服已到位，超好看！👗','今天有媒体采访注意言行🎙️','网上讨论度很高，保持状态🔥'],
+      3:['大牌代言在谈别接竞品💼','注意休息别累坏了😰','粉丝涨得很快保持住📈'],
+      4:['最近狗仔盯得紧出门注意📸','今晚重要饭局记得出席🍷','你已经是顶流了稳住👑']
+    };
+    const pool=agentPool[stage.id]||agentPool[1];
+    addMessage('agent','👩‍💼','经纪人杨姐',pick(pool),'经纪人');
+  }
+
+  // 粉丝来信
+  if(Math.random()<0.4){
+    const msgs=[
+      '姐姐我好喜欢你！！每天看你的视频才能睡着💕',
+      '从练习生时期就关注你了，看到你成长好感动😭',
+      '今天能遇见你是我最幸运的事！会一直支持你！🌟',
+      '你的舞台表现力绝了，每次看都起鸡皮疙瘩！🔥',
+      '新歌我循环了一整天！太好听了！！🎵',
+      '姐姐注意身体，不要太累了🥺'
+    ];
+    addMessage('fan','💌',pick(SENDERS.fan),pick(msgs),'粉丝');
+  }
+
+  // 媒体邀约
+  if(state.day>3&&Math.random()<0.25){
+    const msgs=[
+      '您好，我是娱乐周刊记者，想约一个独家专访～',
+      '下期封面人物想邀请您拍摄，档期方便吗？📷',
+      '我们节目想请您当飞行嘉宾，酬劳好商量！🎬',
+      '有个新综艺非常适合您，考虑一下？'
+    ];
+    addMessage('media','📰',pick(SENDERS.media),pick(msgs),'媒体');
+  }
+
+  // 品牌合作
+  if(state.fans>5000&&Math.random()<0.2){
+    const msgs=[
+      '诚邀您成为我们的品牌挚友，合作详情私～',
+      '新款产品想请您代言，报价方便沟通吗？💄',
+      '我们品牌很欣赏您的形象，期待合作！✨',
+      '想给您寄一箱新品试用，喜欢的话可以谈代言～'
+    ];
+    addMessage('brand','🏪',pick(SENDERS.brand),pick(msgs),'品牌');
+  }
+
+  // 粉丝后援会
+  if(state.fans>1000&&Math.random()<0.3){
+    const msgs=[
+      '会长！本周粉丝见面会准备好了！🎉',
+      '粉丝们集资做了新的应援物，超好看！💖',
+      '最近有人黑你，后援会已经在组织净化了💪',
+      '生日应援企划初稿出来了，您看看？🎂'
+    ];
+    addMessage('fanclub','🌟',pick(SENDERS.fanclub),pick(msgs),'后援会');
+  }
+
+  // 限制消息数量
+  if(state.messages.length>40)state.messages=state.messages.slice(-40);
+}
+
+function addMessage(type,icon,sender,text,label){
+  if(!state)return;
+  if(!state.messages)state.messages=[];
+  state.messages.push({
+    id:'msg_'+Date.now()+'_'+rand(0,999),
+    type,icon,sender,text,label,
+    day:state.day,read:false,replies:[]
+  });
+}
+
+// 回复消息（每条消息只能回复一次）
+function replyMessage(msgId,replyText){
+  if(!state||!state.messages)return;
+  const msg=state.messages.find(m=>m.id===msgId);
+  if(!msg||msg.replied)return; // 已回复过就不再回复
+  if(!msg.replies)msg.replies=[];
+  msg.replies.push({text:replyText,time:'第'+state.day+'天',self:true});
+  msg.read=true;
+  msg.replied=true; // 标记已回复
+
+  // 根据消息类型生成自动回复
+  let response='';
+  if(msg.type==='agent'){
+    const resps=['好的杨姐，我会加油的！💪','明白了，谢谢杨姐！😊','收到！'],
+    response=pick(resps);
+  }else if(msg.type==='fan'){
+    const resps=['谢谢你的支持！我会继续努力的💕','看到你的留言好感动😭','一起走花路吧！🌸','爱你哟！💖'],
+    response=pick(resps);
+  }else if(msg.type==='media'){
+    const resps=['好的，我让经纪人联系你们📩','有兴趣，请发详细方案～','这周档期满了，下周可以'],
+    response=pick(resps);
+  }else if(msg.type==='brand'){
+    const resps=['合作可以谈，请联系经纪人💼','很感兴趣！具体方案发来看看✨','谢谢认可，期待合作！'],
+    response=pick(resps);
+  }else if(msg.type==='fanclub'){
+    const resps=['辛苦大家了！谢谢💕','你们真的太用心了😭','有你们真好！🌟'],
+    response=pick(resps);
+  }
+  if(response){
+    msg.replies.push({text:response,time:'刚刚',self:false});
+  }
+  soundClick();
+  renderMessages();
+  saveGame();
+}
+
+/* ================================================================
+   热搜系统
+   ================================================================ */
+function generateTrending(){
+  if(!state)return;
+  const trends=[];
+  const pool=TRENDING_POOL[0].tpl;
+  const count=rand(4,6);
+  const used=[];
+  for(let i=0;i<count;i++){
+    let idx;
+    do{idx=rand(0,pool.length-1)}while(used.includes(idx)&&used.length<pool.length);
+    used.push(idx);
+    const tpl=pool[idx];
+    const title=tpl.replace('{idol}',state.name);
+    trends.push({
+      rank:i+1,title,
+      hot:rand(10,99)+'万',
+      cat:pick(['🔥爆','⚡热','💥沸']),
+      comments:generateComments(title)
+    });
+  }
+  // 玩家相关
+  if(state.fans>500&&Math.random()<0.55){
+    const idx=rand(0,trends.length-1);
+    const myTitle=`${state.name} ${pick(['最新舞台直拍','机场神图','新歌预告','综艺名场面','杂志花絮','直播撒娇名场面'])}`;
+    trends.splice(idx,0,{
+      rank:'⚡',title:myTitle,hot:formatNum(state.fans),
+      cat:'🔥热',isMine:true,
+      comments:generateComments(myTitle,true)
+    });
+  }
+  state.trending=trends;
+}
+
+function generateComments(title,isMine){
+  const count=rand(3,6);
+  const comments=[];
+  for(let i=0;i<count;i++){
+    const user=pick(COMMENT_USERS);
+    const styles=[COMMENTS_EXCITED,COMMENTS_NEUTRAL,COMMENTS_CRITICAL];
+    const style=pick(styles);
+    const text=pick(style);
+    comments.push({
+      user,text,
+      likes:rand(10,9999),
+      time:rand(1,60)+'分钟前'
+    });
+  }
+  return comments;
+}
+
+/* ================================================================
+   随机事件
+   ================================================================ */
+const EVENTS=[
+  {id:'fan_letter',stages:[0],chance:0.25,text:'一个粉丝写了长长的信给你，说你的歌陪伴TA度过了最难的时候 💌',
+   opts:[{text:'💌 认真回信',eff:{popularity:5,eq:3,fans:200},msg:'粉丝收到回信哭了！'},{text:'📸 发ins感谢',eff:{popularity:8,fans:500},msg:'转发过了万！'}]},
+  {id:'street_cap',stages:[0],chance:0.2,text:'路人在街上认出了你，想要合影！',
+   opts:[{text:'😊 微笑合影',eff:{popularity:3,fans:100,exposure:3},msg:'路人的朋友发了小红书！'},{text:'😅 婉拒离开',eff:{popularity:-2},msg:'对方有点失望……'}]},
+  {id:'lucky',stages:[0],chance:0.15,text:'捡到一张中了奖的彩票！',
+   opts:[{text:'💰 兑换奖金',eff:{money:500},msg:'运气真好！'},{text:'🎁 送给粉丝',eff:{popularity:5,fans:300},msg:'粉丝感动哭了！'}]},
+  {id:'strict_t',stages:[1],chance:0.4,text:'导师对你非常不满意，严厉批评……',
+   opts:[{text:'🙇 虚心接受',eff:{talent:10,popularity:-3},msg:'导师态度有所缓和。'},{text:'😤 不服顶嘴',eff:{eq:2,talent:-8},msg:'气氛变得很尴尬。'}]},
+  {id:'stage_fr',stages:[1],chance:0.3,text:'第一次公开彩排，你紧张得手心冒汗……',
+   opts:[{text:'🧘 深呼吸调整',eff:{eq:5,stamina:-10},msg:'顺利完成了表演！'},{text:'💪 硬着头皮上',eff:{talent:3,popularity:-5},msg:'虽然有瑕疵但勇气可嘉。'}]},
+  {id:'scout',stages:[1],chance:0.25,text:'有星探在偷偷看你的表演！',
+   opts:[{text:'🤩 全力展示',eff:{talent:8,popularity:5},msg:'星探递了名片！'},{text:'🙈 紧张躲开',eff:{popularity:-3},msg:'你错过了机会……'}]},
+  {id:'show_err',stages:[2],chance:0.35,text:'选秀现场你唱破了一个音！全场安静……',
+   opts:[{text:'🙏 鞠躬道歉',eff:{eq:5,popularity:-8},msg:'观众被真诚打动！'},{text:'🎤 即兴改成说唱',eff:{talent:15,popularity:20,fans:1000},msg:'炸翻全场！',need:{talent:65}}]},
+  {id:'judge_p',stages:[2],chance:0.3,text:'评委老师对你赞不绝口！',
+   opts:[{text:'😊 谦虚感谢',eff:{eq:6,popularity:8},msg:'观众好感度暴涨！'},{text:'🏆 自信放话',eff:{popularity:15,exposure:5},msg:'话题度拉满了！'}]},
+  {id:'viral',stages:[2],chance:0.25,text:'你的一段彩排视频在抖音爆了！',
+   opts:[{text:'📱 开直播互动',eff:{popularity:20,fans:2000,money:300},msg:'直播间爆满！'},{text:'🎬 专注下一场',eff:{talent:10,popularity:8},msg:'表现更加稳定了。'}]},
+  {id:'ad_con',stages:[3],chance:0.3,text:'你代言的品牌被曝出问题！',
+   opts:[{text:'📄 发律师函',eff:{money:2000,popularity:-5,exposure:5},msg:'赔钱了事但路人缘下降'},{text:'📱 直播回应',eff:{popularity:10,money:-500,fans:1000,exposure:3},msg:'粉丝觉得你有担当！'}]},
+  {id:'overwork',stages:[3],chance:0.25,text:'连续通宵工作，你病倒了……',
+   opts:[{text:'🏥 好好休息',eff:{stamina:40,popularity:-5,money:-500},msg:'健康最重要！'},{text:'💊 咬牙坚持',eff:{money:1000,stamina:-20,talent:5},msg:'工作完成但身体更差了……'}]},
+  {id:'variety',stages:[3],chance:0.25,text:'热门综艺邀请你当飞行嘉宾！',
+   opts:[{text:'🎮 接受邀约',eff:{popularity:15,fans:1500,stamina:-10},msg:'节目效果爆炸！'},{text:'🎵 婉拒专注音乐',eff:{talent:10,fans:500},msg:'新歌质量很高。'}]},
+  {id:'charity',stages:[3],chance:0.2,text:'受邀参加慈善晚会……',
+   opts:[{text:'❤️ 捐款参与',eff:{popularity:12,eq:8,money:-800,fans:2000},msg:'路人缘暴涨！'},{text:'📸 只拍照',eff:{popularity:3},msg:'被说作秀了……'}]},
+  {id:'dating',stages:[4],chance:0.4,text:'狗仔拍到你和异性吃饭，绯闻炸了！',
+   opts:[{text:'💔 大方承认',eff:{eq:10,fans:-0.15,exposure:20},msg:'真性情但脱粉不少'},{text:'🙅 坚决否认',eff:{eq:-3,exposure:10},msg:'粉丝信了但狗仔还在跟'}]},
+  {id:'sasa',stages:[4],chance:0.3,text:'黑粉恶意造谣你的黑历史……',
+   opts:[{text:'⚖️ 起诉维权',eff:{money:-2000,popularity:8,exposure:5},msg:'维权成功！'},{text:'🎤 发歌回应',eff:{talent:8,popularity:15,fans:3000},msg:'用作品说话太酷了！'}]},
+  {id:'award',stages:[4],chance:0.25,text:'年度颁奖典礼你被提名了！',
+   opts:[{text:'🏆 精心准备',eff:{talent:10,popularity:20,fans:5000,stamina:-15},msg:'震撼全场拿下大奖！'},{text:'😌 平常心',eff:{popularity:10,fans:1000},msg:'虽然没有获奖但气质圈粉'}]},
+  {id:'collab',stages:[4],chance:0.2,text:'国际知名歌手想和你合作！',
+   opts:[{text:'🌍 接受合作',eff:{talent:15,popularity:25,fans:10000,exposure:5},msg:'新歌全球爆火！'},{text:'🇨🇳 专注国内',eff:{popularity:10,fans:3000},msg:'国民度进一步提升。'}]},
+  {id:'meltdown',stages:[4],chance:0.2,text:'网暴和压力让你情绪崩溃……',
+   opts:[{text:'🧠 看心理医生',eff:{eq:10,stamina:20,money:-500},msg:'专业帮助让你好多了'},{text:'💪 疯狂工作',eff:{talent:8,money:1500,stamina:-20,exposure:5},msg:'作品惊艳但让人心疼'}]}
+];
+
+/* ================================================================
+   核心玩法
+   ================================================================ */
+function executeAction(actionId){
+  if(!state)return;
+  const action=ACTIONS.find(a=>a.id===actionId);
+  if(!action)return;
+  if(action.staminaCost&&state.stamina<action.staminaCost){showToast('体力不够了！先休息吧 😴');soundBad();return}
+  if(action.moneyCost&&state.money<action.moneyCost){showToast('钱不够了！💰');soundBad();return}
+
+  soundClick();
+  if(action.staminaCost)changeStat('stamina',-action.staminaCost,false);
+  if(action.moneyCost)changeStat('money',-action.moneyCost,false);
+  if(action.risk)changeStat('exposure',action.risk,false);
+
+  let msg=pick(action.msg);
+  if(action.stat&&action.min!=null){
+    const v=rand(action.min,action.max);
+    changeStat(action.stat,v);
+    const lb={talent:'才艺',beauty:'颜值'}[action.stat]||action.stat;
+    msg+=` ${lb}+${v}`;
+  }
+  if(action.popMin!=null){const v=rand(action.popMin,action.popMax);changeStat('popularity',v);msg+=` 人气+${v}`}
+  if(action.eqMin!=null){const v=rand(action.eqMin,action.eqMax);changeStat('eq',v);msg+=` 情商+${v}`}
+  if(action.moneyMin!=null){const v=rand(action.moneyMin,action.moneyMax);changeStat('money',v);msg+=` 💰+${v}`}
+  if(action.staminaMin!=null){const v=rand(action.staminaMin,action.staminaMax);changeStat('stamina',v);msg+=` 🛌体力+${v}`}
+
+  if(actionId==='train')state.totalTrainDays=(state.totalTrainDays||0)+1;
+  if(actionId==='train'&&Math.random()<0.2){changeStat('stamina',-10);msg+=' 😫 扭到脚了！';soundBad()}
+  if(actionId==='fans'&&Math.random()<0.08){changeStat('popularity',-10);changeStat('exposure',5);msg+=' 😰 发错照片秒删！';soundBad()}
+  if(actionId==='work'&&Math.random()<0.15&&state.stamina<20){changeStat('stamina',-15);msg+=' 🤒 累倒送医！';soundBad()}
+  if(actionId==='rest'&&Math.random()<0.25){changeStat('talent',3);msg+=' 💡 突发灵感！才艺+3'}
+  if(actionId==='lowkey'&&Math.random()<0.3){changeStat('popularity',-1);msg+=' 几乎没人认出来～'}
+
+  addLog(`📌 ${action.icon} ${action.name}：${msg}`);
+  state.fans=state.fans+Math.floor(state.popularity*5)+rand(5,20);
+  state.fans=Math.min(state.fans,999999999);
+  state.lastAction=actionId;
+  if(!state.actionCount)state.actionCount={};
+  state.actionCount[actionId]=(state.actionCount[actionId]||0)+1;
+
+  // 增加一条粉丝留言
+  if(Math.random()<0.5){
+    const msgs=['姐姐舞台超棒！','新歌好好听！','今天也在想你💕','永远支持你！','注意休息哦🥺'];
+    addMessage('fan','💌',pick(SENDERS.fan),pick(msgs),'粉丝');
+  }
+
+  renderAll();saveGame();soundGood();
+  checkFanMilestones();
+
+  // 随机事件
+  const evtChance=0.3+(state.luck-20)/100;
+  if(Math.random()<evtChance){
+    const stage=getStage(state.day);
+    const candidates=EVENTS.filter(e=>e.stages.includes(0)||e.stages.includes(stage.id));
+    const possible=candidates.filter(e=>Math.random()<e.chance);
+    if(possible.length>0){setTimeout(()=>showEventModal(pick(possible)),400);return}
+  }
+  setTimeout(()=>endDay(),500);
+}
+
+/* ================================================================
+   事件模态框
+   ================================================================ */
+function showEventModal(evt){
+  const con=document.getElementById('modal-container');
+  con.className='modal-overlay';
+  const stage=getStage(state.day);
+  let html=`<div class="modal"><h2>💥 突发事件</h2><div class="modal-sub">${stage.emoji} ${stage.name} · 第${state.day}天</div><p class="modal-text">${evt.text}</p><div class="modal-options" id="event-options">`;
+  evt.opts.forEach((o,i)=>{
+    const needStr=o.need?Object.entries(o.need).map(([k,v])=>`${k}≥${v}`).join(','):'';
+    const can=!o.need||Object.entries(o.need).every(([k,v])=>(state[k]||0)>=v);
+    html+=`<button class="btn btn-pink modal-opt" data-opt="${i}" ${can?'':'disabled'}>${o.text}${needStr?' (需要'+needStr+')':''}</button>`;
+  });
+  html+=`</div></div>`;
+  con.innerHTML=html;con.classList.remove('hidden');
+  con.querySelector('#event-options').addEventListener('click',function(e){
+    const btn=e.target.closest('button');if(!btn||btn.disabled)return;
+    const idx=parseInt(btn.dataset.opt);const opt=evt.opts[idx];
+    if(opt.need&&!Object.entries(opt.need).every(([k,v])=>(state[k]||0)>=v)){showToast('条件不足！');return}
+    const changes=[];
+    for(const[k,v]of Object.entries(opt.eff)){
+      if(k==='fans'&&v>-1&&v<1){const a=Math.floor(state.fans*Math.abs(v));const d=v<0?-a:a;changeStat('fans',d);changes.push(`${d>0?'+':''}${d}粉丝(${Math.round(v*100)}%)`)}
+      else if(k==='fans'){const d=changeStat(k,v);changes.push(`${d>0?'+':''}${d}粉丝`)}
+      else if(k==='exposure'){const d=changeStat(k,v);changes.push(`${d>0?'+':''}${d}曝光`)}
+      else{const d=changeStat(k,v);const lbs={talent:'才艺',beauty:'颜值',stamina:'体力',popularity:'人气',eq:'情商',money:'金钱'};const lb=lbs[k]||k;if(d!==0)changes.push(`${d>0?'+':''}${d}${lb}`)}
+    }
+    const rm=opt.msg||'事件结束。';
+    con.innerHTML=`<div class="modal"><h2>📋 事件结果</h2><div class="modal-sub">${evt.text}</div><div style="text-align:center"><p style="font-weight:600;margin:8px 0">👉 ${opt.text.replace(/^[^\s]+\s/,'')}</p>${changes.map(c=>`<div style="color:${c.startsWith('+')?'#34d399':'#f43f5e'};margin:3px 0">${c}</div>`).join('')}<p style="color:#666;margin:8px 0">${rm}</p><button class="btn btn-pink close-btn" id="evt-close">继续 ➡️</button></div></div>`;
+    con.querySelector('#evt-close').addEventListener('click',()=>{
+      con.classList.add('hidden');addLog(`⚡ ${evt.text} → ${rm}`);
+      soundGood();renderAll();saveGame();
+      setTimeout(()=>endDay(),500);
+    });
+  });
+}
+
+/* ================================================================
+   结束一天
+   ================================================================ */
+function endDay(){
+  if(!state)return;
+  state.luck=clamp(state.luck+rand(-5,5),0,100);
+
+  // 每天氛围/心情
+  generateDailyVibe();
+  const vibe=state.dailyVibe;
+  
+  // 小插曲和娱乐圈八卦
+  if(state.dailySideEvent)addLog('💭 '+state.dailySideEvent,'flavor');
+  if(state.dailyGossip)addLog('📰 '+state.dailyGossip,'gossip');
+  
+  // 每日心情buff（微量影响）
+  if(vibe&&vibe.buff==='stamina')changeStat('stamina',vibe.buffAmt,false);
+  else if(vibe&&vibe.buff==='luck')state.luck=clamp(state.luck+vibe.buffAmt,0,100);
+  
+  const fanGain=Math.floor(state.popularity*5+rand(5,30));
+  changeStat('fans',fanGain,false);
+  changeStat('popularity',1,false);
+
+  const stage=getStage(state.day);
+  if(stage.id===2){const pg=Math.floor(state.talent*0.3+state.beauty*0.2)+rand(2,6);changeStat('popularity',pg,false);changeStat('fans',pg*15,false)}
+  if(stage.id===4)changeStat('popularity',rand(2,4),false);
+  if(state.exposure>0)changeStat('exposure',-rand(1,3),false);
+
+  if(state.exposure>70&&Math.random()<0.2){
+    changeStat('popularity',-rand(3,8));
+    changeStat('fans',-Math.floor(state.fans*0.02));
+    addLog('📸 狗仔盯太紧了！人气和粉丝受损！');soundBad();
+  }
+  if(state.exposure>90&&Math.random()<0.3){showGameOver('塌房了 😱','曝光度过高，大量私照被曝光，事业遭受毁灭性打击……');return}
+
+  if(stage.id===1&&state.day===10){
+    if(state.talent<50){showGameOver('被淘汰了 😢','第10天考核未通过，才艺未达50。练习生生涯到此结束。');return}
+    else{state.stage1Passed=true;addLog('🎉 通过考核！进入选秀阶段！');showToast('🎉 考核通过！')}
+  }
+
+  generateDailyMessages();
+  const isNewStage=stage.id>1&&state.day===stage.days[0];
+  if(isNewStage){
+    showStageStory(stage,()=>{generateTrending();showReport()});
+  }else{
+    generateTrending();showReport();
+  }
+}
+
+/* ================================================================
+   报告
+   ================================================================ */
+function showReport(){
+  const con=document.getElementById('modal-container');
+  const stage=getStage(state.day);
+  const vibe=state.dailyVibe;
+  const vibeColor=vibe?`background:${vibe.color}`:'';
+  const quotes=['星光不负赶路人 ✨','做最闪亮的自己 💖','今天也比昨天更棒了！🌟','保持热爱，奔赴山海 🏔️'];
+  const lastLog=state.log[state.log.length-1]||{msg:'新的一天'};
+  // 找最后一条非flavor/gossip的日志作为主要行动
+  const mainLog=[...state.log].reverse().find(l=>l.type!=='flavor'&&l.type!=='gossip')||lastLog;
+  con.className='modal-overlay';
+  con.innerHTML=`<div class="modal" style="text-align:center">
+    <div style="${vibeColor};margin:-24px -20px 12px;padding:16px 20px;border-radius:20px 20px 0 0">
+      <h2 style="font-size:18px;margin:0">📊 第${state.day}天 · 日报</h2>
+      <div class="modal-sub" style="margin:2px 0 0">${stage.emoji} ${stage.name} ${vibe?vibe.emoji+''+vibe.mood:''}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:10px 0;font-size:13px">
+      <div>💎颜值 ${state.beauty}</div><div>🎵才艺 ${state.talent}</div><div>⚡体力 ${state.stamina}</div><div>🔥人气 ${state.popularity}</div>
+      <div>💬情商 ${state.eq}</div><div>💰金钱 ${state.money}</div>
+      <div style="grid-column:1/-1;color:#e8437a;font-weight:600">👥粉丝 ${formatNum(state.fans)}  ·  📸曝光 ${state.exposure}%</div>
+    </div>
+    <div style="background:#f5f5f5;border-radius:10px;padding:8px;font-size:12px;margin:8px 0;text-align:left">
+      <div>📌 ${mainLog.msg}</div>
+      ${state.dailySideEvent?`<div style="color:#999;margin-top:4px;font-size:11px">💭 ${state.dailySideEvent}</div>`:''}
+      ${state.dailyGossip?`<div style="color:#bbb;margin-top:2px;font-size:10px">📰 ${state.dailyGossip}</div>`:''}
+    </div>
+    <div style="font-style:italic;color:#999;font-size:13px">💬 "${pick(quotes)}"</div>
+    <button class="btn btn-pink close-btn" id="report-close" style="margin-top:10px">继续 ➡️</button></div>`;
+  con.querySelector('#report-close').addEventListener('click',()=>{
+    con.classList.add('hidden');if(!state)return;
+    state.day++;if(state.day>60){showEnding();return}
+    renderAll();saveGame();switchPage('schedule');
+  });
+}
+
+/* ================================================================
+   故事 / 游戏结束 / 结局
+   ================================================================ */
+function showStageStory(stage,cb){
+  const con=document.getElementById('modal-container');
+  con.className='modal-overlay';
+  con.innerHTML=`<div class="modal story-card"><div class="s-emoji">${stage.emoji}</div><h2>⚡ 第${stage.days[0]}天 · ${stage.name}</h2><p>${stage.desc}</p><p style="color:#999;font-size:13px">💡 ${stage.tip}</p><button class="btn btn-pink close-btn" id="story-close" style="margin-top:12px">准备好了！💪</button></div>`;
+  con.querySelector('#story-close').addEventListener('click',()=>{con.classList.add('hidden');if(cb)cb();soundClick()});
+}
+function showGameOver(title,desc){
+  const con=document.getElementById('modal-container');
+  con.className='modal-overlay';
+  con.innerHTML=`<div class="modal" style="text-align:center"><div style="font-size:56px;margin-bottom:8px">😢</div><h2>${title}</h2><p style="margin:10px 0;color:#555;line-height:1.8">${desc}</p><button class="btn btn-pink close-btn" id="go-restart">🔄 重新开始</button></div>`;
+  con.querySelector('#go-restart').addEventListener('click',()=>{con.classList.add('hidden');clearSave();resetToIntro();soundClick()});
+  soundBad();
+}
+function showEnding(){
+  document.getElementById('phone-frame').classList.add('hidden');
+  document.getElementById('bottom-nav').classList.add('hidden');
+  document.getElementById('ending-screen').classList.remove('hidden');
+  let ending=ENDINGS.find(e=>e.always);const s=state;
+  for(const e of ENDINGS){
+    if(e.minFans&&s.fans<e.minFans)continue;if(e.minTalent&&s.talent<e.minTalent)continue;
+    if(e.minPopularity&&s.popularity<e.minPopularity)continue;if(e.minEq&&s.eq<e.minEq)continue;
+    if(e.minExposure&&s.exposure<e.minExposure)continue;ending=e;break;
+  }
+  const rs={SSS:'⭐⭐⭐',SS:'⭐⭐',S:'⭐',A:'💫',B:'🔥',C:'📸',D:'💧'};
+  document.getElementById('ending-screen').innerHTML=`<div class="end-card"><div class="end-icon">${ending.icon}</div><div class="end-rank">${rs[ending.rank]||'⭐'}</div><h2>${ending.name}</h2><p>${ending.desc}</p><div class="end-stats">${['talent','beauty','popularity'].map(k=>`<div class="row"><span>${({talent:'🎵才艺',beauty:'💎颜值',popularity:'🔥人气'})[k]}</span><span>${s[k]}</span></div>`).join('')}<div class="row"><span>👥粉丝</span><span>${formatNum(s.fans)}</span></div><div class="row"><span>📸曝光</span><span>${s.exposure}%</span></div><div class="row"><span>🏆成就</span><span>${(s.achievements||[]).length}</span></div></div><button class="btn btn-pink restart-btn" id="end-restart">🔄 重新开始</button></div>`;
+  document.getElementById('end-restart').addEventListener('click',()=>{clearSave();resetToIntro()});
+  soundAch();
+}
+
+/* ================================================================
+   成就&里程碑
+   ================================================================ */
+function checkFanMilestones(){
+  if(!state.fanMilestones)state.fanMilestones=[];
+  for(const m of FAN_MILESTONES){
+    if(state.fans>=m.count&&!state.fanMilestones.includes(m.count)){
+      state.fanMilestones.push(m.count);
+      const el=document.createElement('div');el.className='fan-cel';
+      el.innerHTML=`<div class="text">🎉 ${m.label} 🎉</div>`;
+      document.body.appendChild(el);setTimeout(()=>el.remove(),2000);
+    }
+  }
+}
+function checkAchievements(){
+  if(!state.achievements)state.achievements=[];
+  const news=[];
+  for(const a of ACHIEVEMENTS){if(!state.achievements.includes(a.id)&&a.check(state)){state.achievements.push(a.id);news.push(a)}}
+  for(const a of news){
+    const pop=document.createElement('div');pop.className='ach-popup';
+    pop.innerHTML=`<div class="icon">${a.icon}</div><h3>🏆 成就解锁！</h3><p>${a.name}</p><button class="btn btn-gold close-btn" style="margin-top:8px">太棒了！🎉</button>`;
+    document.body.appendChild(pop);
+    pop.querySelector('.close-btn').addEventListener('click',()=>pop.remove());
+    setTimeout(()=>{if(pop.parentNode)pop.remove()},4000);
+    const c=document.createElement('div');c.className='star-burst';
+    const stars=['⭐','✨','🌟','💫','🎉'];
+    for(let i=0;i<15;i++){
+      const s=document.createElement('div');s.className='star';s.textContent=pick(stars);
+      const a=(360/15)*i,d=rand(50,140);
+      s.style.left='50%';s.style.top='50%';
+      s.style.setProperty('--tx',Math.cos(a*Math.PI/180)*d+'px');
+      s.style.setProperty('--ty',Math.sin(a*Math.PI/180)*d+'px');
+      s.style.animationDelay=(i*0.04)+'s';c.appendChild(s);
+    }
+    document.body.appendChild(c);setTimeout(()=>c.remove(),1400);
+    soundAch();
+  }
+}
+
+/* ================================================================
+   UI 渲染
+   ================================================================ */
+function drawRadar(){
+  const ca=document.getElementById('radar-canvas');const ctx=ca.getContext('2d');
+  const w=ca.width,h=ca.height,cx=w/2,cy=h/2-2,r=Math.min(cx,cy)-18;
+  ctx.clearRect(0,0,w,h);
+  const items=[{label:'颜值',val:state.beauty,color:'#ff6b9d'},{label:'才艺',val:state.talent,color:'#a855f7'},{label:'体力',val:state.stamina,color:'#34d399'},{label:'人气',val:state.popularity,color:'#fbbf24'},{label:'情商',val:state.eq,color:'#60a5fa'}];
+  const n=items.length;
+  for(let ri=1;ri<=4;ri++){const rr=(ri/4)*r;ctx.beginPath();for(let i=0;i<=n;i++){const a=(Math.PI*2/n)*i-Math.PI/2;const x=cx+rr*Math.cos(a),y=cy+rr*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.strokeStyle='rgba(200,200,220,0.3)';ctx.lineWidth=1;ctx.stroke()}
+  for(let i=0;i<n;i++){const a=(Math.PI*2/n)*i-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.strokeStyle='rgba(200,200,220,0.3)';ctx.stroke()}
+  ctx.beginPath();for(let i=0;i<=n;i++){const idx=i%n,val=items[idx].val/100;const a=(Math.PI*2/n)*i-Math.PI/2;const x=cx+r*val*Math.cos(a),y=cy+r*val*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.closePath();ctx.fillStyle='rgba(255,107,157,0.15)';ctx.fill();ctx.strokeStyle='#ff6b9d';ctx.lineWidth=2;ctx.stroke();
+  for(let i=0;i<n;i++){const val=items[i].val/100;const a=(Math.PI*2/n)*i-Math.PI/2;const x=cx+r*val*Math.cos(a),y=cy+r*val*Math.sin(a);ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle=items[i].color;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke()}
+  ctx.font='10px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<n;i++){const a=(Math.PI*2/n)*i-Math.PI/2,lr=r+16;ctx.fillStyle='#7b4a5e';ctx.fillText(items[i].label+' '+items[i].val,cx+lr*Math.cos(a),cy+lr*Math.sin(a))}
+}
+
+function renderQuickStats(){
+  document.getElementById('quick-stats').innerHTML=[
+    {l:'💰金钱',v:state.money,c:''},{l:'🔥人气',v:state.popularity,c:''},
+    {l:'⚡体力',v:state.stamina,c:state.stamina<20?'gold':''},{l:'👥粉丝',v:formatNum(state.fans),c:''}
+  ].map(s=>`<div class="quick-stat"><div class="label">${s.l}</div><div class="value ${s.c}">${s.v}</div></div>`).join('');
+}
+
+function renderTrending(){
+  const el=document.getElementById('trending-list');
+  if(!state.trending||state.trending.length===0){el.innerHTML='<div style="color:#999;font-size:12px;padding:8px 0">暂无热搜</div>';return}
+  document.getElementById('hot-count').textContent=state.trending.length+'条';
+  el.innerHTML=state.trending.map(t=>`<div class="trending-item" data-idx="${state.trending.indexOf(t)}">
+    <div class="rank ${(t.isMine||t.rank<=3)?'top3':''}">${t.rank}</div>
+    <div class="content">
+      <div class="title">${t.isMine?'<span class="hot-badge">🔥 我</span>':''}${t.title}</div>
+      <div class="meta"><span>${t.cat||'热搜'}</span><span>🔥 ${t.hot}</span></div>
+    </div>
+  </div>`).join('');
+  el.querySelectorAll('.trending-item').forEach(item=>{
+    item.addEventListener('click',function(){
+      const idx=parseInt(this.dataset.idx);
+      const t=state.trending[idx];
+      if(!t)return;
+      const con=document.getElementById('modal-container');
+      con.className='modal-overlay';
+      con.innerHTML=`<div class="modal"><h2>🔥 热搜详情</h2><div class="modal-sub">${t.title}</div><div style="max-height:45vh;overflow-y:auto">${(t.comments||[{user:'娱乐速递',text:'暂无评论',likes:0}]).map(c=>`<div style="padding:6px 0;border-bottom:1px solid #f0e0e8;font-size:13px"><div style="font-weight:600;color:#2d1a2e">${c.user}</div><div style="color:#555;margin:2px 0">${c.text}</div><div style="font-size:10px;color:#999">👍 ${c.likes>=1000?(c.likes/1000).toFixed(1)+'k':c.likes} · ${c.time||'刚刚'}</div></div>`).join('')}</div><button class="btn btn-pink close-btn" id="td-close">关闭</button></div>`;
+      con.querySelector('#td-close').addEventListener('click',()=>con.classList.add('hidden'));
+      soundClick();
+    });
+  });
+}
+
+function renderGoalBar(){
+  const bar=document.getElementById('goal-bar');
+  const stage=getStage(state.day);
+  if(stage.id===1&&!state.stage1Passed){
+    bar.classList.remove('hidden');
+    document.getElementById('goal-icon').textContent=stage.emoji;
+    document.getElementById('goal-text').textContent=stage.goal;
+    document.getElementById('goal-progress').textContent=`${state.talent}/${stage.goalTarget}`;
+  }else if(stage.id===2){
+    bar.classList.remove('hidden');
+    document.getElementById('goal-icon').textContent='🔥';
+    document.getElementById('goal-text').textContent='冲刺人气';
+    document.getElementById('goal-progress').textContent=`${state.popularity}`;
+  }else if(stage.id===3){
+    bar.classList.remove('hidden');
+    document.getElementById('goal-icon').textContent='💰';
+    document.getElementById('goal-text').textContent='积累财富';
+    document.getElementById('goal-progress').textContent=`${state.money}`;
+  }else if(stage.id===4){
+    bar.classList.remove('hidden');
+    document.getElementById('goal-icon').textContent='👑';
+    document.getElementById('goal-text').textContent='守住王座';
+    document.getElementById('goal-progress').textContent=`人气${state.popularity}`;
+  }else{bar.classList.add('hidden')}
+}
+
+function renderMessages(){
+  const el=document.getElementById('msg-list');
+  const tabs=document.getElementById('msg-tabs');
+  const msgs=state.messages||[];
+  const unreadAll=msgs.filter(m=>!m.read).length;
+
+  // 消息分类标签
+  const types=[
+    {id:'all',label:`全部${unreadAll>0?' · '+unreadAll:''}`},
+    {id:'agent',label:'经纪人'},
+    {id:'fan',label:'粉丝'},
+    {id:'media',label:'媒体'},
+    {id:'brand',label:'品牌'},
+    {id:'fanclub',label:'后援会'}
+  ];
+  tabs.innerHTML=types.map(t=>`<button class="msg-tab-btn ${state.msgTab===t.id?'active':''}" data-tab="${t.id}">${t.label}</button>`).join('');
+  tabs.querySelectorAll('.msg-tab-btn').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      state.msgTab=this.dataset.tab;renderMessages();soundClick();
+    });
+  });
+
+  // 过滤
+  let filtered=state.msgTab==='all'?msgs:msgs.filter(m=>m.type===state.msgTab);
+  if(filtered.length===0){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:#ccc;font-size:14px">📭 暂无消息</div>';return;
+  }
+
+  el.innerHTML=filtered.map(m=>`<div class="msg-item" data-id="${m.id}">
+    <div class="avatar">${m.icon||'💬'}</div>
+    <div class="body">
+      <div class="sender">${m.sender||'未知'} <span class="tag">${m.label||''}</span></div>
+      <div class="preview">${m.text||''}${m.replies&&m.replies.length>0?' · 💬已回复':''}</div>
+      <div class="time">第${m.day}天${m.read?'':' · 未读'}</div>
+    </div>
+    ${!m.read?'<div class="badge-dot"></div>':''}
+  </div>`).join('');
+
+  el.querySelectorAll('.msg-item').forEach(item=>{
+    item.addEventListener('click',function(){
+      const id=this.dataset.id;
+      const msg=msgs.find(m=>m.id===id);
+      if(!msg)return;
+      msg.read=true;
+      showMessageDetail(msg);
+      soundClick();
+    });
+  });
+}
+
+function showMessageDetail(msg){
+  const con=document.getElementById('modal-container');
+  const replies=msg.replies||[];
+  const stage=getStage(state.day);
+
+  con.className='modal-overlay chat-modal';
+  let chatHtml=replies.map(r=>`<div class="chat-bubble ${r.self?'self':''}">${r.text}${r.self&&r.time?`<div style="font-size:9px;opacity:0.6;margin-top:4px">${r.time}</div>`:''}</div>`).join('');
+
+  // 生成一些可选择回复（已回复过就不再显示）
+  let replyOptions='';
+  const alreadyReplied=msg.replied||replies.some(r=>r.self);
+  if(!alreadyReplied){
+    if(msg.type==='agent'){
+    const opts=['好的杨姐，我会努力的💪','收到！放心吧😊','明白了～','谢谢杨姐关心！'];
+    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
+  }else if(msg.type==='fan'){
+    const opts=['谢谢支持！一起走花路吧🌸','收到你的爱啦💕','我会继续加油的！🌟'];
+    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
+  }else if(msg.type==='media'){
+    const opts=['请联系经纪人洽谈📩','很有兴趣！发方案来看看✨','这周档期满了抱歉🙏'];
+    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
+  }else if(msg.type==='brand'){
+    const opts=['合作可以谈，请联系经纪人💼','很感兴趣！期待合作✨','谢谢认可！发详细方案？'];
+    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
+  }else if(msg.type==='fanclub'){
+    const opts=['辛苦大家了！💕','太用心了😭','有你们真好！🌟'];
+    replyOptions=opts.map(o=>`<div class="r-opt" data-reply="${o}">${o}</div>`).join('');
+  }
+  }
+
+  con.innerHTML=`<div class="modal" style="padding:16px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:28px">${msg.icon||'💬'}</span><div><div style="font-weight:600;color:#2d1a2e;font-size:14px">${msg.sender||'未知'}</div><div style="font-size:11px;color:#999">${msg.label||''} · 第${msg.day}天</div></div></div>
+    <div class="chat-area">
+      <div class="chat-bubble">${msg.text}</div>
+      ${chatHtml}
+      ${replyOptions?`<div class="chat-bubble self" style="background:var(--pink);color:#fff;">快捷回复：${replyOptions}</div>`:alreadyReplied?'<div class="chat-bubble self" style="background:#e0e0e0;color:#999;font-size:12px">💬 已回复</div>':''}
+    </div>
+    <button class="btn btn-pink close-btn" id="chat-close" style="margin-top:8px;min-width:100px">关闭</button>
+  </div>`;
+
+  con.querySelector('#chat-close').addEventListener('click',()=>{con.classList.add('hidden');renderMessages();saveGame()});
+
+  // 回复功能
+  con.querySelectorAll('.r-opt').forEach(opt=>{
+    opt.addEventListener('click',function(){
+      const text=this.dataset.reply;
+      replyMessage(msg.id,text);
+      showMessageDetail(msg);
+    });
+  });
+}
+
+function renderSchedule(){
+  document.getElementById('sched-day').textContent=state.day;
+  const stage=getStage(state.day);
+  document.getElementById('sched-stage').textContent=stage.emoji+' '+stage.name;
+  document.getElementById('today-tip').textContent=getDailyVibeTip();
+  // 每日小插曲
+  const sideEl=document.getElementById('side-event');
+  if(sideEl&&state.dailySideEvent)sideEl.textContent=state.dailySideEvent;
+  // 今日心情颜色背景
+  const card=document.getElementById('today-card');
+  if(card&&state.dailyVibe){
+    card.style.background=`linear-gradient(135deg,${state.dailyVibe.color},white)`;
+  }
+
+  const el=document.getElementById('sched-actions');
+  el.innerHTML=ACTIONS.map(a=>{
+    const disabled=(a.staminaCost&&state.stamina<a.staminaCost)||(a.moneyCost&&state.money<a.moneyCost);
+    const warn=a.staminaCost&&state.stamina<a.staminaCost?'⚠️体力不足':a.moneyCost&&state.money<a.moneyCost?'⚠️钱不够':'';
+    let eff='';
+    if(a.stat&&a.min!=null)eff+=`${a.stat==='talent'?'🎵':a.stat==='beauty'?'💎':''}${a.min}~${a.max}`;
+    if(a.popMin!=null)eff+=` 🔥${a.popMin}~${a.popMax}`;
+    if(a.moneyMin!=null)eff+=` 💰${a.moneyMin}~${a.moneyMax}`;
+    if(a.staminaMin!=null)eff+=` 🛌${a.staminaMin}~${a.staminaMax}`;
+    if(a.risk!==undefined)eff+=` 📸${a.risk>0?'+':''}${a.risk}`;
+    return `<div class="sched-btn ${disabled?'disabled':''}" data-action="${a.id}">
+      <div class="s-icon">${a.icon}</div>
+      <div class="s-info"><div class="s-name">${a.name}</div><div class="s-desc">${a.desc}${warn?' · '+warn:''}</div></div>
+      <div class="s-effects">${eff}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderProfile(){
+  drawRadar();
+  document.getElementById('profile-stats').innerHTML=[
+    {l:'💎颜值',v:state.beauty},{l:'🎵才艺',v:state.talent},{l:'⚡体力',v:state.stamina},
+    {l:'🔥人气',v:state.popularity},{l:'💬情商',v:state.eq},{l:'💰金钱',v:state.money,c:'pink'},
+    {l:'👥粉丝',v:formatNum(state.fans),c:'pink'},{l:'📸曝光',v:state.exposure+'%'}
+  ].map(s=>`<div class="profile-stat"><span class="s-label">${s.l}</span><span class="s-val ${s.c||''}">${s.v}</span></div>`).join('');
+
+  const grid=document.getElementById('achieve-grid');
+  const unlocked=state.achievements||[];
+  document.getElementById('ach-count').textContent=`(${unlocked.length}/${ACHIEVEMENTS.length})`;
+  grid.innerHTML=ACHIEVEMENTS.map(a=>`<div class="ach-item ${unlocked.includes(a.id)?'':'locked'}"><span class="ach-icon">${unlocked.includes(a.id)?a.icon:'🔒'}</span><span class="ach-name">${a.name}</span></div>`).join('');
+}
+
+function renderExposure(){
+  const fill=document.getElementById('exposure-fill');
+  document.getElementById('exposure-text').textContent=state.exposure+'%';
+  fill.style.width=state.exposure+'%';
+}
+
+function renderRecentLog(){
+  const el=document.getElementById('recent-log');
+  const logs=state.log.slice(-5);
+  let html=logs.length>0?logs.map(l=>`<div>📅 Day${l.day} ${l.msg}</div>`).join(''):'<div style="color:#ccc">开始你的偶像之旅吧！</div>';
+  // 加上今日心情和八卦
+  if(state.dailyVibe){
+    html=`<div style="color:#7b4a5e;font-weight:500;margin-bottom:4px">${state.dailyVibe.emoji} 今日心情：${state.dailyVibe.mood}</div>`+html;
+  }
+  if(state.dailyGossip&&logs.length>0){
+    html+=`<div style="color:#bbb;font-size:11px;margin-top:4px;border-top:1px solid #f0e0e8;padding-top:4px">📰 ${state.dailyGossip}</div>`;
+  }
+  el.innerHTML=html;
+}
+
+function switchPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+pageId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===pageId));
+  if(pageId==='home'){renderQuickStats();renderTrending();renderRecentLog()}
+  if(pageId==='msg')renderMessages();
+  if(pageId==='schedule')renderSchedule();
+  if(pageId==='profile')renderProfile();
+  document.getElementById('main-content').scrollTop=0;
+}
+
+// 渲染头像（支持emoji和自定义图片）
+function renderAvatar(){
+  const textEl=document.getElementById('avatar-text');
+  const imgEl=document.getElementById('avatar-img');
+  if(!state)return;
+  if(state.avatar&&state.avatar.startsWith('data:image/')){
+    textEl.classList.add('hidden');
+    imgEl.classList.remove('hidden');
+    imgEl.src=state.avatar;
+  }else{
+    textEl.classList.remove('hidden');
+    imgEl.classList.add('hidden');
+    textEl.textContent=state.avatar||'👩‍🎤';
+  }
+}
+
+function renderAll(){
+  if(!state)return;
+  document.getElementById('day-num').textContent=state.day;
+  const stage=getStage(state.day);
+  document.getElementById('stage-tag').textContent=stage.emoji+stage.name;
+  renderAvatar();
+  document.getElementById('fans-display').textContent=formatNum(state.fans);
+  renderExposure();renderGoalBar();
+  const active=document.querySelector('.page.active');
+  if(active){
+    const id=active.id.replace('page-','');
+    if(id==='home'){renderQuickStats();renderTrending();renderRecentLog()}
+    else if(id==='msg')renderMessages();
+    else if(id==='schedule')renderSchedule();
+    else if(id==='profile')renderProfile();
+  }
+  checkAchievements();checkFanMilestones();
+}
+
+/* ================================================================
+   初始化
+   ================================================================ */
+function resetToIntro(){
+  document.getElementById('phone-frame').classList.add('hidden');
+  document.getElementById('bottom-nav').classList.add('hidden');
+  document.getElementById('ending-screen').classList.add('hidden');
+  document.getElementById('intro-screen').classList.remove('hidden');state=null;
+}
+function startGame(name,avatar){
+  state=defaultState(name,avatar);
+  document.getElementById('intro-screen').classList.add('hidden');
+  document.getElementById('phone-frame').classList.remove('hidden');
+  document.getElementById('bottom-nav').classList.remove('hidden');
+  addMessage('agent','👩‍💼','经纪人杨姐','你好呀！我是你的经纪人杨姐，以后咱们就是一家人了！有问题随时找我～💕','经纪人');
+  generateTrending();switchPage('schedule');renderAll();saveGame();
+  setTimeout(()=>showStageStory(getStage(1)),400);
+}
+
+/* ================================================================
+   事件绑定
+   ================================================================ */
+document.addEventListener('DOMContentLoaded',function(){
+  if(loadGame()&&state&&state.day<=60){
+    document.getElementById('intro-screen').classList.add('hidden');
+    document.getElementById('phone-frame').classList.remove('hidden');
+    document.getElementById('bottom-nav').classList.remove('hidden');
+    renderAll();switchPage('home');
+    if(state.day>60)showEnding();return;
+  }
+  // 自定义上传头像
+  let customAvatarDataUrl=null;
+  const fileInput=document.getElementById('avatar-upload');
+  if(fileInput){
+    fileInput.addEventListener('change',function(e){
+      const file=e.target.files[0];
+      if(!file)return;
+      const reader=new FileReader();
+      reader.onload=function(ev){
+        customAvatarDataUrl=ev.target.result;
+        const preview=document.getElementById('custom-avatar-preview');
+        const img=document.getElementById('custom-avatar-img');
+        if(preview&&img){preview.style.display='block';img.src=customAvatarDataUrl}
+        // 取消所有预设选择
+        document.querySelectorAll('.av-opt').forEach(el=>el.classList.remove('selected'));
+        showToast('📸 头像上传成功！');
+        soundClick();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  document.querySelectorAll('.av-opt').forEach(el=>{
+    el.addEventListener('click',function(){
+      document.querySelectorAll('.av-opt').forEach(e=>e.classList.remove('selected'));
+      this.classList.add('selected');
+      // 清除自定义头像
+      customAvatarDataUrl=null;
+      const preview=document.getElementById('custom-avatar-preview');
+      if(preview)preview.style.display='none';
+    });
+  });
+  document.getElementById('start-game-btn').addEventListener('click',function(){
+    const name=document.getElementById('player-name').value.trim()||'星光学员';
+    const avatar=customAvatarDataUrl||document.querySelector('.av-opt.selected')?.dataset.av||'👩‍🎤';
+    startGame(name,avatar);
+  });
+  document.getElementById('player-name').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('start-game-btn').click()});
+});
+
+document.querySelectorAll('.nav-item').forEach(item=>{item.addEventListener('click',function(){switchPage(this.dataset.page);soundClick()})});
+
+document.getElementById('avatar-btn').addEventListener('click',function(){
+  if(!state)return;
+  // 自定义头像不能通过点击切换
+  if(state.avatar&&state.avatar.startsWith('data:image/')){showToast('长按可更换头像哦 📸');return}
+  const avs=['👩‍🎤','👸','🧝‍♀️','🦊','🌸','💃','🦸‍♀️','👼'];
+  state.avatar=avs[(avs.indexOf(state.avatar)+1)%avs.length];
+  renderAvatar();saveGame();soundClick();
+});
+
+document.getElementById('sched-actions').addEventListener('click',function(e){
+  const btn=e.target.closest('.sched-btn');
+  if(!btn||btn.classList.contains('disabled'))return;
+  if(btn.dataset.action)executeAction(btn.dataset.action);
+});
+
+// 更多页
+document.getElementById('more-log').addEventListener('click',function(){
+  if(!state)return;
+  const con=document.getElementById('modal-container');
+  con.className='modal-overlay';
+  con.innerHTML=`<div class="modal"><h2>📋 完整日志</h2><div style="max-height:50vh;overflow-y:auto;font-size:13px;line-height:1.7">${state.log.map(l=>`<div style="padding:4px 0;border-bottom:1px solid #f5e8f0;color:#555">📅 Day${l.day} ${l.msg}</div>`).join('')||'<div style="color:#999">暂无日志</div>'}</div><button class="btn btn-pink close-btn" id="log-close">关闭</button></div>`;
+  con.querySelector('#log-close').addEventListener('click',()=>con.classList.add('hidden'));soundClick();
+});
+document.getElementById('more-save').addEventListener('click',function(){saveGame();showToast('💾 已保存！');soundClick()});
+document.getElementById('more-tutorial').addEventListener('click',function(){
+  const con=document.getElementById('modal-container');
+  con.className='modal-overlay';
+  con.innerHTML=`<div class="modal"><h2>📖 游戏指南</h2>
+    <div style="font-size:13px;line-height:1.8;color:#555">
+      <p><b>🎯 游戏目标</b><br>60天内成为顶级偶像！共有4个阶段，每个阶段有不同目标。</p>
+      <p><b>📋 每日操作</b><br>在「日程」页选择一个行动，执行后推进到下一天。</p>
+      <p><b>💬 消息</b><br>你会收到经纪人、粉丝、媒体、品牌等消息，可以回复互动。</p>
+      <p><b>🔥 热搜</b><br>每天的热搜话题会反映娱乐圈动态，点击可查看评论。</p>
+      <p><b>📸 曝光风险</b><br>曝光过高会遇到绯闻危机，超过90%可能直接塌房！</p>
+      <p><b>⚠️ 阶段1提醒</b><br>第10天才艺必须≥50，否则淘汰！</p>
+    </div>
+    <button class="btn btn-pink close-btn" id="tut-close">知道了！</button></div>`;
+  con.querySelector('#tut-close').addEventListener('click',()=>con.classList.add('hidden'));soundClick();
+});
+document.getElementById('more-restart').addEventListener('click',function(){if(confirm('确定重新开始？进度将丢失！')){clearSave();resetToIntro();soundClick()}});
+
+document.getElementById('modal-container').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden')});
+
+console.log('✨ 星光之路 v3.0 · 沉浸版');
+})();
+</script>
+</body>
+</html>
