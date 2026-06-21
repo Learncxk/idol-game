@@ -46,9 +46,15 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 
 /* ===== 曝光条 ===== */
-.exposure-row{display:flex;align-items:center;gap:6px;padding:3px 14px;background:rgba(255,255,255,0.5);backdrop-filter:blur(8px);font-size:10px;color:#666;border-bottom:1px solid rgba(0,0,0,0.04)}
+.exposure-row{display:flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(255,255,255,0.5);backdrop-filter:blur(8px);font-size:10px;color:#666;border-bottom:1px solid rgba(0,0,0,0.04);transition:all .5s}
 .exposure-row .bar-track{flex:1;height:5px;background:#f0e0e8;border-radius:10px;overflow:hidden}
 .exposure-row .bar-fill{height:100%;border-radius:10px;transition:width .5s ease;background:linear-gradient(90deg,#34d399,#fbbf24,#f43f5e)}
+.exposure-row .ex-icon{font-size:12px}
+.exposure-row .ex-label{font-size:9px;font-weight:600;white-space:nowrap;min-width:24px;text-align:center}
+.exposure-row.danger{background:#fef2f2!important}
+.exposure-row.warning{background:#fffbeb!important}
+.exposure-row .bar-fill.danger{background:linear-gradient(90deg,#fbbf24,#f43f5e,#dc2626)!important;animation:exPulse 1s ease-in-out infinite}
+@keyframes exPulse{0%,100%{opacity:1}50%{opacity:0.6}}
 
 /* ===== 目标栏 ===== */
 .goal-bar{display:flex;align-items:center;gap:6px;padding:4px 14px;background:rgba(255,255,255,0.55);backdrop-filter:blur(8px);font-size:11px;color:#7b4a5e;border-bottom:1px solid rgba(0,0,0,0.04)}
@@ -255,9 +261,9 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
 
   <!-- 曝光条 -->
   <div class="exposure-row">
-    <span>📸</span>
-    <div class="bar-track"><div class="bar-fill" id="exposure-fill" style="width:5%"></div></div>
-    <span id="exposure-text">5%</span>
+    <span class="ex-icon" id="ex-icon">🟢</span>
+    <span class="bar-track" style="flex:1;height:5px;background:#f0e0e8;border-radius:10px;overflow:hidden"><span class="bar-fill" id="exposure-fill" style="width:5%"></span></span>
+    <span class="ex-label" id="ex-label">安全</span>
   </div>
 
   <!-- 目标条 -->
@@ -334,6 +340,7 @@ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei
       <div class="more-item" id="more-log">📋 完整日志</div>
       <div class="more-item" id="more-save">💾 手动保存</div>
       <div class="more-item" id="more-tutorial">📖 游戏指南</div>
+      <div class="more-item" id="more-story">📖 故事回顾</div>
       <div class="more-item" id="more-restart">🔄 重新开始</div>
     </div>
   </div>
@@ -1222,6 +1229,18 @@ const EVENTS=[
    opts:[{text:'🧠 看心理医生',eff:{eq:10,stamina:20,money:-500},msg:'专业帮助让你好多了'},{text:'💪 疯狂工作',eff:{talent:8,money:1500,stamina:-20,exposure:5},msg:'作品惊艳但让人心疼'}]}
 ];
 
+// ===== 主线剧情事件（关键日触发）=====
+const STORY_EVENTS={
+  1:{title:'🌟 梦想的起点',text:'你站在经纪公司大楼前，深吸一口气。从今天起，你就是一名练习生了！\n\n前台姐姐递给你一张日程表："上午形体课，下午声乐训练，晚上自由练习——这将是你的日常。"\n\n你握紧拳头，心里默默发誓：我一定要站在最耀眼的舞台上！',color:'#e8f5e9'},
+  10:{title:'🎯 考核日',text:'第10天到了！今天是练习生考核日。\n\n评委老师坐在台下，表情严肃。你听到自己的心跳声……\n\n只有才艺达到50以上才能通过考核！',color:'#fff3e0',check:g=>g.talent>=50,fail:'你的才艺不足50，被公司淘汰了……',failTitle:'😢 淘汰'},
+  11:{title:'🎤 登上选秀舞台',text:'恭喜通过考核！你登上了选秀节目的舞台。\n\n聚光灯打在脸上，台下坐着三位评委和上千名观众。\n\n主持人笑着问："请介绍一下自己吧！"',color:'#fce4ec'},
+  20:{title:'🏆 出道之夜',text:'选秀决赛夜！\n\n经过10天的激烈角逐，今晚将决定你的命运。\n\n人气和粉丝数决定了你是否能成团出道！',color:'#fff8e1',check:g=>g.popularity>=30&&g.fans>=3000,fail:'人气和粉丝不够，你与出道位失之交臂……',failTitle:'😢 落选'},
+  21:{title:'💫 新人出道',text:'你成功出道了！\n\n公司为你举办了出道发布会，媒体记者们长枪短炮地对着你。\n\n经纪人杨姐在后台悄悄对你说："准备好了吗？娱乐圈，我们来了。"',color:'#f3e5f5'},
+  40:{title:'💰 事业的十字路口',text:'成为新人偶像已经20天了。\n\n你看着银行卡余额，意识到偶像也是一份需要赚钱的工作。\n\n存款少于5000的话，连房租都付不起了……',color:'#fff3e0',check:g=>g.money>=5000,fail:'存款不足5000，你被迫放弃偶像梦想……',failTitle:'😢 退圈'},
+  41:{title:'👑 顶流之路',text:'你挺过了最艰难的时期！现在你是当之无愧的顶流偶像了。\n\n但是人红是非多，狗仔、黑粉、对家……都在暗处盯着你。\n\n经纪人杨姐语重心长："最后20天，稳住就能赢。"',color:'#fce4ec'},
+  60:{title:'🎬 大结局',text:'60天的旅程，走到了最后一天。\n\n回首这一路——从懵懂的练习生，到万众瞩目的偶像。\n\n你的故事，将由这60天的每一个选择来书写。',color:'#e8f5e9'}
+};
+
 /* ================================================================
    核心玩法
    ================================================================ */
@@ -1443,24 +1462,6 @@ function endDay(){
     changeStat('fans',-Math.floor(state.fans*0.01));
   }
 
-  // ===== 曝光危机系统 =====
-  if(state.exposure>70){
-    if(!state.exposureWarned){
-      addMessage('agent','👩‍💼','经纪人杨姐','曝光太高了！快想办法压下去！不然出大事😰','经纪人');
-      state.exposureWarned=true;
-      showToast('⚠️ 经纪人紧急警告！');
-    }
-    if(Math.random()<0.15){
-      changeStat('popularity',-rand(5,10));
-      changeStat('fans',-Math.floor(state.fans*0.03));
-      addLog('📸 狗仔又爆黑料！人气和粉丝下降！');soundBad();
-    }
-  }
-  if(state.exposure>85&&Math.random()<0.2){
-    showGameOver('塌房了 😱','曝光彻底失控，大量黑料被扒出，事业毁于一旦……');
-    return;
-  }
-
   // ===== 关系自然变化 =====
   if(!state.relations)state.relations=initRelations();
   // 粉丝关系：高曝光伤害粉丝
@@ -1496,6 +1497,54 @@ function endDay(){
   // 检查任务进度
   checkQuests();
   checkQuestFailures();
+  
+  // ===== 主线剧情事件触发 =====
+  const storyEvt=STORY_EVENTS[state.day];
+  if(storyEvt){
+    if(storyEvt.check&&!storyEvt.check(state)){
+      // 未通过关键剧情检查→游戏结束
+      showGameOver(storyEvt.failTitle||'😢 失败',storyEvt.fail||'你没能在关键时刻达到要求……');
+      return;
+    }
+    // 显示剧情事件（半透明背景，点击继续）
+    const con=document.getElementById('modal-container');
+    con.className='modal-overlay';
+    con.innerHTML=`<div class="modal" style="text-align:center;background:${storyEvt.color||'#fff'}">
+      <div style="font-size:48px;margin-bottom:8px">📖</div>
+      <h2 style="font-size:20px">${storyEvt.title}</h2>
+      <div style="font-size:14px;line-height:1.9;color:#555;margin:12px 0;white-space:pre-line;text-align:left">${storyEvt.text}</div>
+      <button class="btn btn-pink close-btn" id="story-continue" style="margin-top:8px">继续 ➡️</button>
+    </div>`;
+    con.querySelector('#story-continue').addEventListener('click',()=>{
+      con.classList.add('hidden');
+      addLog('📖 '+storyEvt.title);
+      generateTrending();showReport();
+    });
+    return; // 等待故事关闭后再继续
+  }
+  
+  // ===== 曝光增强影响 =====
+  if(state.exposure>50){
+    // 高曝光降低粉丝增长速度
+    const fanPenalty=Math.floor(state.fans*0.01*(state.exposure/50));
+    if(fanPenalty>0){
+      changeStat('fans',-fanPenalty,false);
+      addLog(`📸 曝光影响：粉丝增长减${fanPenalty}`,'gossip');
+    }
+    // 高曝光降低工作收入（品牌方顾虑）
+    addMessage('brand','🏪',pick(SENDERS.brand),'最近你话题度有点高……合作的事先放一放吧','品牌');
+  }
+  if(state.exposure>70&&Math.random()<0.25){
+    // 高曝光随机触发负面热搜
+    changeStat('popularity',-rand(5,10));
+    changeStat('fans',-Math.floor(state.fans*0.02));
+    addLog(`📸 负面新闻爆发！人气和粉丝下降！`);soundBad();
+  }
+  if(state.exposure>85){
+    // 极高曝光即时触发危机
+    showCrisisEvent('🚨 曝光失控！','你的私生活被全方位曝光，舆论彻底失控……',{popularity:-20,fans:-Math.floor(state.fans*0.08),exposure:5});
+    return;
+  }
   
   const isNewStage=stage.id>1&&state.day===stage.days[0];
   if(isNewStage){
@@ -2187,9 +2236,21 @@ function renderProfile(){
 }
 
 function renderExposure(){
+  const e=state.exposure;
+  // 曝光等级
+  let icon,label,cls;
+  if(e<20){icon='🟢';label='安全';cls=''}
+  else if(e<40){icon='🟡';label='关注';cls='warning'}
+  else if(e<60){icon='🟠';label='警惕';cls='warning'}
+  else if(e<80){icon='🔴';label='危险';cls='danger'}
+  else{icon='💀';label='失控';cls='danger'}
+  
+  const row=document.querySelector('.exposure-row');
+  if(row){row.className='exposure-row'+' '+cls}
   const fill=document.getElementById('exposure-fill');
-  document.getElementById('exposure-text').textContent=state.exposure+'%';
-  fill.style.width=state.exposure+'%';
+  if(fill){fill.style.width=e+'%';fill.className='bar-fill'+(e>=60?' danger':'')}
+  const labelEl=document.getElementById('ex-label');
+  if(labelEl)labelEl.textContent=icon+' '+label+' '+e+'%';
 }
 
 function renderRecentLog(){
@@ -2370,6 +2431,22 @@ document.getElementById('more-tutorial').addEventListener('click',function(){
     </div>
     <button class="btn btn-pink close-btn" id="tut-close">知道了！</button></div>`;
   con.querySelector('#tut-close').addEventListener('click',()=>con.classList.add('hidden'));soundClick();
+});
+document.getElementById('more-story').addEventListener('click',function(){
+  const con=document.getElementById('modal-container');
+  con.className='modal-overlay';
+  const storyDays=Object.keys(STORY_EVENTS).map(Number).filter(d=>d<=state.day).sort((a,b)=>a-b);
+  const stHtml=storyDays.map(d=>{
+    const se=STORY_EVENTS[d];
+    const unlocked=state.day>=d;
+    if(!unlocked)return `<div style="padding:8px 0;border-bottom:1px solid #f0e0e8;color:#ccc">🔒 第${d}天 · ???</div>`;
+    return `<div style="padding:8px 0;border-bottom:1px solid #f0e0e8;background:${se.color||'#fff'};border-radius:6px;margin:4px 0;padding:8px 10px">
+      <div style="font-weight:600;color:#2d1a2e">📖 第${d}天 · ${se.title}</div>
+      <div style="font-size:12px;color:#555;margin-top:4px;line-height:1.6">${se.text.substring(0,80)}${se.text.length>80?'……':''}</div>
+    </div>`;
+  }).join('');
+  con.innerHTML=`<div class="modal"><h2>📖 故事回顾</h2><div class="modal-sub">你已走过的路</div><div style="max-height:55vh;overflow-y:auto">${stHtml||'<div style="color:#999;padding:10px;text-align:center">还没有经历故事事件</div>'}</div><button class="btn btn-pink close-btn" id="story-recap-close">关闭</button></div>`;
+  con.querySelector('#story-recap-close').addEventListener('click',()=>con.classList.add('hidden'));soundClick();
 });
 document.getElementById('more-restart').addEventListener('click',function(){if(confirm('确定重新开始？进度将丢失！')){clearSave();resetToIntro();soundClick()}});
 
